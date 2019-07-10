@@ -1,0 +1,9 @@
+__pycache__/*
+.mypy_cache/*
+*.pyc
+save_dir/*
+cifar-10-batches-py/*
+log/*
+logs/*
+sample_indices/*
+test-distortions/
