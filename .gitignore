@@ -7,3 +7,4 @@ log/*
 logs/*
 sample_indices/*
 test-distortions/
+*.pickle

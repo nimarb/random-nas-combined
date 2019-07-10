@@ -24,6 +24,7 @@ class ConvBlock(nn.Module):
         outputs = self.conv1(inputs)
         return outputs
 
+
 class DeConvBlock(nn.Module):
     def __init__(self, in_size, out_size, kernel):
         super(DeConvBlock, self).__init__()
@@ -35,6 +36,7 @@ class DeConvBlock(nn.Module):
     def forward(self, inputs):
         outputs = self.conv1(inputs)
         return outputs
+
 
 class ConvBlock_last(nn.Module):
     def __init__(self, in_size, out_size, kernel):
@@ -48,6 +50,7 @@ class ConvBlock_last(nn.Module):
         outputs = self.conv1(inputs)
         return outputs
 
+
 class DeConvBlock_last(nn.Module):
     def __init__(self, in_size, out_size, kernel):
         super(DeConvBlock_last, self).__init__()
@@ -60,6 +63,7 @@ class DeConvBlock_last(nn.Module):
         outputs = self.conv1(inputs)
         return outputs
 
+
 class ConvBlock_s(nn.Module):
     def __init__(self, in_size, out_size, kernel, stride):
         super(ConvBlock_s, self).__init__()
@@ -71,6 +75,7 @@ class ConvBlock_s(nn.Module):
     def forward(self, inputs):
         outputs = self.conv1(inputs)
         return outputs
+
 
 class ConvBlock_sum(nn.Module):
     def __init__(self, in_size, out_size, kernel):
@@ -93,6 +98,7 @@ class ConvBlock_sum(nn.Module):
             in_data[small_ch_id] = torch.cat([in_data[small_ch_id], tmp * 0], 1)
         out = torch.add(in_data[0], in_data[1])
         return self.relu(out)
+
 
 class ResBlock(nn.Module):
     def __init__(self, in_size, out_size, kernel, stride):
@@ -124,6 +130,7 @@ class ResBlock(nn.Module):
             in_data[small_ch_id] = torch.cat([in_data[small_ch_id], tmp * 0], 1)
         out = torch.add(in_data[0], in_data[1])
         return self.relu(out)
+
 
 class Sum(nn.Module):
     def __init__(self):
@@ -196,6 +203,7 @@ class SepConv(nn.Module):
     def forward(self, x):
         return self.op(x)
 
+
 class DilConv(nn.Module):
     def __init__(self, C_in, C_out, kernel_size, dilation=2, stride=1, affine=False):
         super(DilConv, self).__init__()
@@ -208,7 +216,6 @@ class DilConv(nn.Module):
 
     def forward(self, x):
         return self.op(x)
-
 
 
 class CGP2CNN(nn.Module):
@@ -276,6 +283,7 @@ class CGP2CNN(nn.Module):
                     else:
                         sys.exit('error at CGPCNN init')
                 i += 1
+
         elif arch_type == 'vgg':
             for name, in1 in self.cgp:
                 if name == 'input' in name:

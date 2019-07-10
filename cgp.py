@@ -9,7 +9,8 @@ import math
 # gene[f][c] f:function type, c:connection (nodeID)
 class Individual(object):
 
-    def __init__(self, net_info, init):
+    def __init__(self, net_info, init, arch_type):
+        self.arch_type = arch_type
         self.net_info = net_info
         self.gene = np.zeros((self.net_info.node_num + self.net_info.out_num, self.net_info.max_in_num + 1)).astype(int)
         self.is_active = np.empty(self.net_info.node_num + self.net_info.out_num).astype(bool)
@@ -103,8 +104,10 @@ class Individual(object):
         return self.is_active.sum()
 
     def active_net_list(self):
-        net_list = [["input", 0, 0]]
-        # net_list = [["input", 0]]
+        if self.arch_type == 'resnet':
+            net_list = [["input", 0, 0]]
+        elif self.arch_type == 'vgg':
+            net_list = [["input", 0]]
         active_cnt = np.arange(self.net_info.input_num + self.net_info.node_num + self.net_info.out_num)
         active_cnt[self.net_info.input_num:] = np.cumsum(self.is_active)
 
@@ -122,10 +125,11 @@ class Individual(object):
 
 
 class CGP(object):
-    def __init__(self, net_info, eval_func, lam=4, img_size=32, init=False):
+    def __init__(self, net_info, eval_func, arch_type, lam=4, img_size=32,
+                 init=False):
         self.lam = lam
         self.max_pool_num = int(math.log2(img_size) - 2)
-        self.pop = [Individual(net_info, init) for _ in range(1 + self.lam)]
+        self.pop = [Individual(net_info, init, arch_type) for _ in range(1 + self.lam)]
         active_num = self.pop[0].count_active_node()
         _, pool_num= self.pop[0].check_pool()
         while active_num < self.pop[0].net_info.min_active_num or pool_num > self.max_pool_num:

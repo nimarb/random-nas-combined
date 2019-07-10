@@ -3,8 +3,9 @@
 
 import numpy as np
 
-# network configurations
+
 class CgpInfoConvSet(object):
+    """Network configurations"""
     def __init__(self, arch_type='resnet', rows=30, cols=40, level_back=40,
                  min_active_num=8, max_active_num=50):
         self.input_num = 1
@@ -20,19 +21,29 @@ class CgpInfoConvSet(object):
                          'S_SepBlock_32_3',  'S_SepBlock_32_5',
                          'S_SepBlock_64_3',  'S_SepBlock_64_5',
                          'Max_Pool', 'Avg_Pool']
+
+        func_in_num_resnet = [1, 1,
+                              1, 1,
+                              1, 1,
+                              1, 1,
+                              1, 1,
+                              1, 1,
+                              2, 2,
+                              1, 1]
+        func_in_num_vgg = [1, 1,
+                           1, 1,
+                           1, 1,
+                           1, 1,
+                           1, 1,
+                           1, 1,
+                           1, 1]
+
         if arch_type == 'resnet':
             self.func_type = func_type_resnet
+            self.func_in_num = func_in_num_resnet
         elif arch_type == 'vgg':
             self.func_type = func_type_vgg
-
-        self.func_in_num = [1, 1,
-                            1, 1,
-                            1, 1,
-                            1, 1,
-                            1, 1,
-                            1, 1,
-                            2, 2,
-                            1, 1]
+            self.func_in_num = func_in_num_vgg
 
         self.out_num = 1
         self.out_type = ['full']

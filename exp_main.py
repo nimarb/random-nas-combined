@@ -1,16 +1,19 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import json
 import argparse
 import pickle
 import pandas as pd
 import csv
+import multiprocessing
 
-from cgp import *
-from cgp_config import *
+from cgp import CGP
+from cgp_config import CgpInfoConvSet
 from cnn_train import CNN_train
 from utils import create_folder
 
+# For debugging in vscode
+multiprocessing.set_start_method('spawn', True)
 
 if __name__ == '__main__':
 
@@ -27,13 +30,13 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', type=int, default=128)
     parser.add_argument('--num_epoch', type=int, default=50)
     parser.add_argument('--num_train', type=int, default=500)
-    parser.add_argument('--genotype', type=str, default='resnet')
+    # parser.add_argument('--genotype', type=str, default='resnet')
     parser.add_argument('--num_depth', type=int, default=200)
     parser.add_argument('--num_min_depth', type=int, default=30)
     parser.add_argument('--num_max_depth', type=int, default=100)
     parser.add_argument('--num_breadth', type=int, default=1)
     parser.add_argument('--img_size', type=int, default=32)
-    parser.add_argument('--arch_type', type=str, default='resnet')
+    parser.add_argument('--arch_type', type=str, default='vgg')
     # parser.add_argument('--data_dir', type=str, default='./')
     args = parser.parse_args()
     config = vars(args)
@@ -55,17 +58,20 @@ if __name__ == '__main__':
         accs = {}
         create_folder(config['save_dir'])
         for i in range(config['archs_per_task']):
-            with open(f"{config['save_dir']}accuracy%s.txt" % str(args.gpuID), 'at') as f:
+            with open(f"{config['save_dir']}accuracy{args.gpuID}.txt", 'at') as f:
                 with open(f"{config['save_dir']}config.json", 'w+') as cfg_f:
                     json.dump(config, cfg_f, indent=2)
 
-                if config['arch_type'] == 'resnet':
-                    cgp = CGP(network_info, None, lam=1, img_size=img_size, init=args.init)
-                elif config['arch_type'] == 'vgg':
+                cgp = CGP(network_info, None, arch_type=config['arch_type'],
+                          lam=1, img_size=img_size, init=args.init)
 
                 print(cgp.pop[0].active_net_list())
-                full = CNN_train('cifar10', validation=True, verbose=True, batchsize=batchsize, data_num=args.num_train, mode="full", config=config)
-                acc_full, acc_curr = full(cgp.pop[0].active_net_list(), args.gpuID, num_epoch=num_epoch, out_model='retrained_net.model')
+                full = CNN_train('cifar10', validation=True, verbose=True,
+                                 batchsize=batchsize, data_num=args.num_train,
+                                 mode="full", config=config)
+                acc_full, acc_curr = full(cgp.pop[0].active_net_list(),
+                                          args.gpuID, num_epoch=num_epoch,
+                                          out_model='retrained_net.model')
                 accs[i] = acc_curr
                 f.write(str(acc_full)+"\n")
                 with open(f"{config['save_dir']}accuracies.json", 'w+') as fw:
@@ -138,4 +144,3 @@ if __name__ == '__main__':
         # temp = CNN_train('haze1', validation=False, verbose=True, img_size=128, batchsize=16)
         # cgp = [['input', 0], ['S_SumConvBlock_64_3', 0], ['S_ConvBlock_64_5', 1], ['S_SumConvBlock_128_1', 2], ['S_SumConvBlock_64_1', 3], ['S_SumConvBlock_64_5', 4], ['S_DeConvBlock_3_3', 5]]
         # acc = temp(cgp, 0, num_epoch=500, out_model='retrained_net.model')
-

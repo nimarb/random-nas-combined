@@ -97,7 +97,8 @@ class CNN_train():
 
         # model
         torch.backends.cudnn.benchmark = True
-        model = CGP2CNN(cgp, self.channel, self.n_class, self.img_size)
+        model = CGP2CNN(cgp, self.channel, self.n_class, self.img_size,
+                        arch_type=self.config['arch_type'])
         # model = nn.DataParallel(model)
         model = model.cuda(gpuID)
         # Loss and Optimizer
