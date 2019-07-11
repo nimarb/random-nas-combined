@@ -18,11 +18,16 @@ multiprocessing.set_start_method('spawn', True)
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Evolving CAE structures')
-    parser.add_argument('--gpu_num', '-g', type=int, default=1, help='Num. of GPUs')
-    parser.add_argument('--lam', '-l', type=int, default=2, help='Num. of offsprings')
-    parser.add_argument('--net_info_file', default='network_info.pickle', help='Network information file name')
-    parser.add_argument('--log_file', default='./log_cgp.txt', help='Log file name')
-    parser.add_argument('--mode', '-m', default='evolution', help='Mode (evolution / retrain / reevolution)')
+    parser.add_argument('--gpu_num', '-g', type=int,
+                        default=1, help='Num. of GPUs')
+    parser.add_argument('--lam', '-l', type=int, default=2,
+                        help='Num. of offsprings')
+    parser.add_argument('--net_info_file', default='network_info.pickle',
+                        help='Network information file name')
+    parser.add_argument(
+        '--log_file', default='./log_cgp.txt', help='Log file name')
+    parser.add_argument('--mode', '-m', default='evolution',
+                        help='Mode (evolution / retrain / reevolution)')
     parser.add_argument('--init', '-i', action='store_true')
     parser.add_argument('--gpuID', '-p', type=int, default=0, help='GPU ID')
     parser.add_argument('--save_dir', default='./logs/', help='Log file name')
@@ -83,8 +88,8 @@ if __name__ == '__main__':
                     writer = csv.writer(fw, lineterminator='\n')
                     writer.writerow(cgp._log_data(net_info_type='active_only'))
                 print(acc_full)
-        
-        ## TinyImageNet
+
+        # TinyImageNet
         # for _ in range(10):
         #     cgp = CGP(network_info, None, lam=1, img_size=img_size, init=args.init)
         #     print(cgp.pop[0].active_net_list())
@@ -110,7 +115,8 @@ if __name__ == '__main__':
         # Load network architecture
         cgp = CGP(network_info, None)
         data = pd.read_csv(args.log_file, header=None)  # Load log file
-        cgp.load_log(list(data.tail(1).values.flatten().astype(int)))  # Read the log at final generation
+        # Read the log at final generation
+        cgp.load_log(list(data.tail(1).values.flatten().astype(int)))
         print(cgp._log_data(net_info_type='active_only', start_time=0))
         # Retraining the network
         test_dir = '/ceph/blume/datasets/CIFAR10-C/test/'
@@ -136,8 +142,10 @@ if __name__ == '__main__':
             'speckle_noise.npy',
             'zoom_blur.npy'
         ]
-        temp = CNN_train('cifar10', validation=False, verbose=True, batchsize=128, test_dists=test_dists)
-        acc = temp(cgp.pop[0].active_net_list(), 0, num_epoch=200, out_model='retrained_net.model')
+        temp = CNN_train('cifar10', validation=False,
+                         verbose=True, batchsize=128, test_dists=test_dists)
+        acc = temp(cgp.pop[0].active_net_list(), 0,
+                   num_epoch=200, out_model='retrained_net.model')
         print(acc)
 
         # # otherwise (in the case where we do not have a log file.)

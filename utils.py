@@ -19,6 +19,7 @@ label_names = [
     'truck'
 ]
 
+
 def accuracy(output, target, topk=(1,)):
     maxk = max(topk)
     batch_size = target.size(0)
@@ -32,6 +33,7 @@ def accuracy(output, target, topk=(1,)):
         correct_k = correct[:k].view(-1).float().sum(0)
         res.append(correct_k.mul_(100.0/batch_size))
     return res
+
 
 class Cutout(object):
     def __init__(self, length):
@@ -71,16 +73,19 @@ def _data_transforms_cifar10(cutout, cutout_length):
     valid_transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize(CIFAR_MEAN, CIFAR_STD),
-        ])
+    ])
     return train_transform, valid_transform
+
 
 def drop_path(x, drop_prob):
     if drop_prob > 0.:
         keep_prob = 1.-drop_prob
-        mask = Variable(torch.cuda.FloatTensor(x.size(0), 1, 1, 1).bernoulli_(keep_prob))
+        mask = Variable(torch.cuda.FloatTensor(
+            x.size(0), 1, 1, 1).bernoulli_(keep_prob))
         x.div_(keep_prob)
         x.mul_(mask)
     return x
+
 
 def plot_images(images, cls_true, cls_pred=None):
     """

@@ -26,8 +26,9 @@ def parse_args():
     parser.add_argument('--gpus_per_task', type=int, default=1)
     parser.add_argument('--num_train_determ',
                         dest='num_train_determ',
-                        type=lambda x:bool(strtobool(x)), default=True)
-    parser.add_argument('--genotype', type=str, default='PRIMITIVES', nargs='+')
+                        type=lambda x: bool(strtobool(x)), default=True)
+    parser.add_argument('--genotype', type=str,
+                        default='PRIMITIVES', nargs='+')
     # parser.add_argument('--num_train', type=int, default=5000, nargs='+')
     args = parser.parse_args()
 
@@ -61,15 +62,15 @@ def run_nas(yagi, num_train, gpu_num, file_to_run, id,
     env_vars = os.environ.copy()
     env_vars["CUDA_VISIBLE_DEVICES"] = gpu_num
     sh.qsub(
-            '-q',
-            f'main.q@{yagi}.vision.is.tohoku',
-            '-v', f'time={time}',
-            '-v', f'num_train={num_train}',
-            '-v', f'id={id}',
-            '-v', f'batch_size={batch_size}',
-            '-v', f'archs_per_task={archs_per_task}',
-            file_to_run,
-            _env=env_vars)
+        '-q',
+        f'main.q@{yagi}.vision.is.tohoku',
+        '-v', f'time={time}',
+        '-v', f'num_train={num_train}',
+        '-v', f'id={id}',
+        '-v', f'batch_size={batch_size}',
+        '-v', f'archs_per_task={archs_per_task}',
+        file_to_run,
+        _env=env_vars)
 
 
 def get_available_gpus(yagi):
@@ -96,9 +97,9 @@ def train_per_dset_size(args, training_samples, file_to_run, availabe_yagis):
             print(f'Running on GPU ids: {gpus_to_use}')
 
             # run_nas(
-                # yagi, num_train, args.init_channels, gpus_to_use,
-                # file_to_run, args.batch_size, args.num_layers,
-                # args.num_nodes, args.num_train_determ)
+            # yagi, num_train, args.init_channels, gpus_to_use,
+            # file_to_run, args.batch_size, args.num_layers,
+            # args.num_nodes, args.num_train_determ)
 
 
 def train_once_per_gpu(args, file_to_run, availabe_yagis):
@@ -106,7 +107,8 @@ def train_once_per_gpu(args, file_to_run, availabe_yagis):
     for yagi in availabe_yagis:
         total_gpus += get_available_gpus(yagi)
     if 0 != args.archs_per_num_train:
-        archs_per_task = round(args.archs_per_num_train / (total_gpus - args.gpu_start))
+        archs_per_task = round(args.archs_per_num_train /
+                               (total_gpus - args.gpu_start))
     else:
         archs_per_task = args.archs_per_task
 

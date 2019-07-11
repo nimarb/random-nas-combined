@@ -72,7 +72,8 @@ class NoisySet(Dataset):
         self.app_transforms = transforms.Compose([
             # transforms.Scale(self.img_size),
             transforms.ToTensor(),
-            transforms.Normalize((0.49139968,0.48215827,0.44653124), (0.24703233,0.24348505,0.26158768))
+            transforms.Normalize(
+                (0.49139968, 0.48215827, 0.44653124), (0.24703233, 0.24348505, 0.26158768))
         ])
 
     def __len__(self):
@@ -86,7 +87,7 @@ class NoisySet(Dataset):
 
 def get_test_loader(test_path):
     dataloader = DataLoader(NoisySet(test_path), batch_size=128, shuffle=True,
-    # dataloader = DataLoader(dset.CIFAR10('./'), batch_size=128, shuffle=True,
+                            # dataloader = DataLoader(dset.CIFAR10('./'), batch_size=128, shuffle=True,
                             num_workers=1, drop_last=True, pin_memory=True)
     return dataloader
 
@@ -97,9 +98,9 @@ def get_test_loader2():
                             num_workers=0, drop_last=True, pin_memory=True)
     return dataloader
 
+
 if __name__ == "__main__":
     ldr = get_test_loader('brightness.npy')
     ldr2 = get_test_loader2('brightness.npy')
     for _, (data, target) in enumerate(ldr):
         print('hi')
-    

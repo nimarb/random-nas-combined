@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 
 import time
 import math
@@ -22,10 +21,13 @@ import torchvision
 
 from datastuff import get_test_loader, get_distortion_tests
 
+
 # __init__: load dataset
 # __call__: training the CNN defined by CGP list
 class CNN_train():
-    def __init__(self, dataset_name, validation=True, verbose=True, img_size=32, batchsize=128, data_num=500, mode="full", config=None):
+    def __init__(self, dataset_name, validation=True, verbose=True,
+                 img_size=32, batchsize=128, data_num=500, mode="full",
+                 config=None):
         self.verbose = verbose
         self.img_size = img_size
         self.validation = validation
@@ -41,49 +43,62 @@ class CNN_train():
                 self.n_class = 10
                 self.channel = 3
                 if self.validation:
-                    self.dataloader, self.test_dataloader = get_train_valid_loader(data_dir='./', batch_size=self.batchsize, augment=True, random_seed=2018, num_workers=1, pin_memory=True, data_num=self.data_num)
+                    self.dataloader, self.test_dataloader = get_train_valid_loader(
+                        data_dir='./', batch_size=self.batchsize, augment=True, random_seed=2018, num_workers=1, pin_memory=True, data_num=self.data_num)
                 else:
                     train_dataset = dset.CIFAR10(root='./', train=True, download=True,
-                            transform=transforms.Compose([
-                                transforms.RandomCrop(32, padding=4),
-                                transforms.RandomHorizontalFlip(),
-                                transforms.ToTensor(),
-                                transforms.Normalize((0.49139968,0.48215827,0.44653124), (0.24703233,0.24348505,0.26158768)),
-                                Cutout(16),
-                            ]))
+                                                 transform=transforms.Compose([
+                                                     transforms.RandomCrop(
+                                                         32, padding=4),
+                                                     transforms.RandomHorizontalFlip(),
+                                                     transforms.ToTensor(),
+                                                     transforms.Normalize(
+                                                         (0.49139968, 0.48215827, 0.44653124), (0.24703233, 0.24348505, 0.26158768)),
+                                                     Cutout(16),
+                                                 ]))
                     test_dataset = dset.CIFAR10(root='./', train=False, download=True,
-                            transform=transforms.Compose([
-                                # transforms.Scale(self.img_size),
-                                transforms.ToTensor(),
-                                transforms.Normalize((0.49139968,0.48215827,0.44653124), (0.24703233,0.24348505,0.26158768)),
-                            ]))
-                    self.dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=self.batchsize, shuffle=True, num_workers=int(4), drop_last=True)
-                    self.test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=self.batchsize, shuffle=True, num_workers=int(4), drop_last=True)
+                                                transform=transforms.Compose([
+                                                    # transforms.Scale(self.img_size),
+                                                    transforms.ToTensor(),
+                                                    transforms.Normalize(
+                                                        (0.49139968, 0.48215827, 0.44653124), (0.24703233, 0.24348505, 0.26158768)),
+                                                ]))
+                    self.dataloader = torch.utils.data.DataLoader(
+                        train_dataset, batch_size=self.batchsize, shuffle=True, num_workers=int(4), drop_last=True)
+                    self.test_dataloader = torch.utils.data.DataLoader(
+                        test_dataset, batch_size=self.batchsize, shuffle=True, num_workers=int(4), drop_last=True)
             elif dataset_name == 'tinyimagenet':
                 self.n_class = 200
                 self.channel = 3
                 if self.validation:
-                    self.dataloader, self.test_dataloader = get_train_valid_loader_tinyimagenet(data_dir='/home/suganuma/dataset/tiny-imagenet-200/train', batch_size=self.batchsize, augment=True, random_seed=2018, num_workers=4, pin_memory=False, data_num=self.data_num)
+                    self.dataloader, self.test_dataloader = get_train_valid_loader_tinyimagenet(
+                        data_dir='/home/suganuma/dataset/tiny-imagenet-200/train', batch_size=self.batchsize, augment=True, random_seed=2018, num_workers=4, pin_memory=False, data_num=self.data_num)
                 else:
                     if self.mode == "full":
                         transform_train = transforms.Compose([
                             transforms.RandomCrop(64, padding=4),
                             transforms.RandomHorizontalFlip(),
                             transforms.ToTensor(),
-                            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-                            Cutout(16),])
+                            transforms.Normalize(
+                                (0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+                            Cutout(16), ])
 
-                        trainset = torchvision.datasets.ImageFolder(root='/home/suganuma/dataset/tiny-imagenet-200/train', transform=transform_train)
-                        self.dataloader = torch.utils.data.DataLoader(trainset, batch_size=self.batchsize, shuffle=True, num_workers=8, drop_last=True)
+                        trainset = torchvision.datasets.ImageFolder(
+                            root='/home/suganuma/dataset/tiny-imagenet-200/train', transform=transform_train)
+                        self.dataloader = torch.utils.data.DataLoader(
+                            trainset, batch_size=self.batchsize, shuffle=True, num_workers=8, drop_last=True)
                     else:
-                        self.dataloader, _ = get_train_valid_loader_tinyimagenet(data_dir='/home/suganuma/dataset/tiny-imagenet-200/train', batch_size=self.batchsize, augment=True, random_seed=2018, num_workers=4, pin_memory=False, data_num=self.data_num)
+                        self.dataloader, _ = get_train_valid_loader_tinyimagenet(
+                            data_dir='/home/suganuma/dataset/tiny-imagenet-200/train', batch_size=self.batchsize, augment=True, random_seed=2018, num_workers=4, pin_memory=False, data_num=self.data_num)
                         print("train  num", self.data_num)
 
                     transform_test = transforms.Compose([
-                            transforms.ToTensor(),
-                            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),])
-                    testset = torchvision.datasets.ImageFolder(root='/home/suganuma/dataset/tiny-imagenet-200/val', transform=transform_test)
-                    self.test_dataloader = torch.utils.data.DataLoader(testset, batch_size=self.batchsize, shuffle=False, num_workers=4, drop_last=True)
+                        transforms.ToTensor(),
+                        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)), ])
+                    testset = torchvision.datasets.ImageFolder(
+                        root='/home/suganuma/dataset/tiny-imagenet-200/val', transform=transform_test)
+                    self.test_dataloader = torch.utils.data.DataLoader(
+                        testset, batch_size=self.batchsize, shuffle=False, num_workers=4, drop_last=True)
         else:
             print('\tInvalid input dataset name at CNN_train()')
             exit(1)
@@ -104,8 +119,10 @@ class CNN_train():
         # Loss and Optimizer
         criterion = nn.CrossEntropyLoss()
         criterion = criterion.cuda(gpuID)
-        optimizer = optim.Adam(model.parameters(), lr=0.001, betas=(0.5, 0.999))
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, float(num_epoch))
+        optimizer = optim.Adam(
+            model.parameters(), lr=0.001, betas=(0.5, 0.999))
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            optimizer, float(num_epoch))
 
         # Train loop
         for epoch in range(1, num_epoch+1):
@@ -209,11 +226,12 @@ class CNN_train():
                     label = target[i]
                     class_correct[label] += c[i].item()
                     class_total[label] += 1
-        print('Accuracy of the network on the test images:     %d %% (%d / %d)' % (100 * correct / total, correct, total))
+        print('Accuracy of the network on the test images:     %d %% (%d / %d)' %
+              (100 * correct / total, correct, total))
         # for i in range(self.n_class):
-            # acc_list[i] = 100 * class_correct[i] / class_total[i]
-            # print('Accuracy of %d: (%d/%d)' % (i, class_correct[i], class_total[i]))
-            # print('Accuracy of %d: %2d %% (%d/%d)' % (i, 100 * class_correct[i] / class_total[i], class_correct[i], class_total[i]))
+        # acc_list[i] = 100 * class_correct[i] / class_total[i]
+        # print('Accuracy of %d: (%d/%d)' % (i, class_correct[i], class_total[i]))
+        # print('Accuracy of %d: %2d %% (%d/%d)' % (i, 100 * class_correct[i] / class_total[i], class_correct[i], class_total[i]))
         # print('Test set : (%d/%d)' % (correct, total))
         # print('Test set : Average Acc : {:.4f}'.format(correct/total))
 
