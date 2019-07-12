@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 
 import csv
 import time
@@ -27,7 +26,10 @@ class Individual(object):
         # intermediate node
         for n in range(self.net_info.node_num + self.net_info.out_num):
             # type gene
-            type_num = self.net_info.func_type_num if n < self.net_info.node_num else self.net_info.out_type_num
+            if n < self.net_info.node_num:
+                type_num = self.net_info.func_type_num
+            else:
+                type_num = self.net_info.out_type_num
             self.gene[n][0] = np.random.randint(type_num)
             # connection gene
             if n == 0:
@@ -42,14 +44,19 @@ class Individual(object):
     def __check_course_to_out(self, n):
         if not self.is_active[n]:
             self.is_active[n] = True
-            t = self.gene[n][0]
+            t = self.gene[n][0]  # Gets layer_type value
             if n >= self.net_info.node_num:    # output node
                 in_num = self.net_info.out_in_num[t]
             else:    # intermediate node
                 in_num = self.net_info.func_in_num[t]
 
+            # looping because there might be multiple inputs to the NN
             for i in range(in_num):
+                # >Stopping condition<
+                # Gets currents elements `rnd val 0..index`
+                # `input_num` is 1 --> checking if not at beginning of layers
                 if self.gene[n][i+1] >= self.net_info.input_num:
+                    # 
                     self.__check_course_to_out(
                         self.gene[n][i+1] - self.net_info.input_num)
 

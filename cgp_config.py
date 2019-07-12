@@ -7,7 +7,7 @@ class CgpInfoConvSet(object):
     """Network configurations"""
     def __init__(self, arch_type='resnet', rows=30, cols=40, level_back=40,
                  min_active_num=8, max_active_num=50):
-        self.input_num = 1
+        self.input_num = 1  # number (ID) of the input node (usually 1 (start))
         func_type_resnet = ['S_SepBlock_16_3',  'S_SepBlock_16_5',
                             'S_SepBlock_32_3',  'S_SepBlock_32_5',
                             'S_SepBlock_64_3',  'S_SepBlock_64_5',
@@ -46,13 +46,13 @@ class CgpInfoConvSet(object):
 
         self.out_num = 1
         self.out_type = ['full']
-        self.out_in_num = [1]
+        self.out_in_num = [1]  # 
 
         # CGP network configuration
-        self.rows = rows
-        self.cols = cols
-        self.node_num = rows * cols
-        self.level_back = level_back
+        self.rows = rows  # Actual number of layers if `cols = 1`
+        self.cols = cols  # For most NNs `= 1` to make a simple NN
+        self.node_num = rows * cols  # Number of network layers
+        self.level_back = level_back  # Used for mod of connection gene in cgp
         self.min_active_num = min_active_num
         self.max_active_num = max_active_num
 
