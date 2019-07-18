@@ -37,7 +37,8 @@ class Individual(object):
                     self.gene[n][i + 1] = 0
             else:
                 for i in range(self.net_info.max_in_num):
-                    self.gene[n][i + 1] = np.random.randint(0, n)
+                    # self.gene[n][i + 1] = np.random.randint(0, n)
+                    self.gene[n][i + 1] = n-1
 
         self.check_active()
 
@@ -79,7 +80,13 @@ class Individual(object):
 
     def __mutate(self, current, min_int, max_int):
         mutated_gene = current
+        # Will result in an endless loop, because `np.random.randint(1) = 0`
+        # Means when `current = 0` and `mutated_gene = 0` the loop is endless
+        # TODO: is the error that `mutated_gene` can become `0` or is the while
+        # condition incorrect?
         while current == mutated_gene:
+            # NOTE: inserting +1 into the `randint()` leads to a lot of index
+            # out of range errors and thus is not correct.
             mutated_gene = min_int + np.random.randint(max_int - min_int)
         return mutated_gene
 

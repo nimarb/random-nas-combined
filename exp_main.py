@@ -33,12 +33,12 @@ if __name__ == '__main__':
     parser.add_argument('--save_dir', default='./logs/', help='Log file name')
     parser.add_argument('--archs_per_task', type=int, default=5)
     parser.add_argument('--batch_size', type=int, default=128)
-    parser.add_argument('--num_epoch', type=int, default=50)
+    parser.add_argument('--num_epoch', type=int, default=100)
     parser.add_argument('--num_train', type=int, default=500)
     # parser.add_argument('--genotype', type=str, default='resnet')
-    parser.add_argument('--num_depth', type=int, default=900)
-    parser.add_argument('--num_min_depth', type=int, default=300)
-    parser.add_argument('--num_max_depth', type=int, default=1000)
+    parser.add_argument('--num_depth', type=int, default=100)
+    parser.add_argument('--num_min_depth', type=int, default=30)
+    parser.add_argument('--num_max_depth', type=int, default=150)
     parser.add_argument('--num_breadth', type=int, default=1)
     parser.add_argument('--img_size', type=int, default=32)
     parser.add_argument('--arch_type', type=str, default='vgg')
@@ -51,7 +51,7 @@ if __name__ == '__main__':
         # Create CGP configuration and save network information
         network_info = CgpInfoConvSet(
             arch_type=config['arch_type'], rows=args.num_breadth,
-            cols=args.num_depth, level_back=1,
+                cols=depth, level_back=2,
             min_active_num=args.num_min_depth,
             max_active_num=args.num_max_depth)
         with open(args.net_info_file, mode='wb') as f:

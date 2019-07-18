@@ -49,8 +49,8 @@ class CgpInfoConvSet(object):
         self.out_in_num = [1]  # 
 
         # CGP network configuration
-        self.rows = rows  # Actual number of layers if `cols = 1`
-        self.cols = cols  # For most NNs `= 1` to make a simple NN
+        self.rows = rows  # For most NNs `= 1` to make a simple NN
+        self.cols = cols  # Actual number of layers if `cols = 1`
         self.node_num = rows * cols  # Number of network layers
         self.level_back = level_back  # Used for mod of connection gene in cgp
         self.min_active_num = min_active_num
