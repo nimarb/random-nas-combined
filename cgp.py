@@ -59,7 +59,8 @@ class Individual(object):
                 if self.gene[n][i+1] >= self.net_info.input_num:
                     # 
                     self.__check_course_to_out(
-                        self.gene[n][i+1] - self.net_info.input_num)
+                        self.gene[n][i+1])
+                        # self.gene[n][i+1] - self.net_info.input_num)
 
     def check_active(self):
         # clear
