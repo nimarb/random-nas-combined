@@ -3,10 +3,16 @@ from torch.utils.data import Dataset, DataLoader
 import torchvision.datasets as dset
 import numpy as np
 
+from pathlib import Path
+
 
 def get_distortion_tests(test_dir=None):
     if not test_dir:
         test_dir = '/ceph/blume/datasets/CIFAR10-C/test/'
+        if not Path(test_dir).exists():
+            test_dir = '/home/blume/datasets/CIFAR10-C/test/'
+        if not Path(self.label_path).exists():
+            self.label_path = '/home/suganuma/dataset/CIFAR10-C/test/'
     test_dists = [
         'brightness.npy',
         'contrast.npy',
@@ -66,6 +72,10 @@ class NoisySet(Dataset):
     def __init__(self, test_path):
         self.test_path = test_path
         self.label_path = '/ceph/blume/datasets/CIFAR10-C/test/labels.npy'
+        if not Path(self.label_path).exists():
+            self.label_path = '/home/blume/datasets/CIFAR10-C/test/labels.npy'
+        if not Path(self.label_path).exists():
+            self.label_path = '/home/suganuma/dataset/CIFAR10-C/test/labels.npy'
         # self.label_path = 'labels.npy'
         self.data = np.load(test_path)
         self.targets = np.load(self.label_path).tolist()
@@ -101,6 +111,6 @@ def get_test_loader2():
 
 if __name__ == "__main__":
     ldr = get_test_loader('brightness.npy')
-    ldr2 = get_test_loader2('brightness.npy')
+    # ldr2 = get_test_loader2('brightness.npy')
     for _, (data, target) in enumerate(ldr):
         print('hi')

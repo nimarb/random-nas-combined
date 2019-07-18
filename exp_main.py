@@ -6,13 +6,17 @@ import pickle
 import pandas as pd
 import csv
 import multiprocessing
+import random
+import platform
 
+from pathlib import Path
 from cgp import CGP
 from cgp_config import CgpInfoConvSet
 from cnn_train import CNN_train
 from utils import create_folder
 
 # For debugging in vscode
+if not 'nbpc' in platform.node():
 multiprocessing.set_start_method('spawn', True)
 
 if __name__ == '__main__':
@@ -120,6 +124,10 @@ if __name__ == '__main__':
         print(cgp._log_data(net_info_type='active_only', start_time=0))
         # Retraining the network
         test_dir = '/ceph/blume/datasets/CIFAR10-C/test/'
+        if not Path(test_dir).exists():
+            test_dir = '/home/blume/datasets/CIFAR10-C/test/'
+        if not Path(test_dir).exists():
+            test_dir = '/home/suganuma/dataset/CIFAR10-C/test/'
         test_dists = [
             'brightness.npy',
             'contrast.npy',
