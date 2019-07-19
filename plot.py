@@ -13,7 +13,7 @@ from datastuff import get_distortion_tests_name, get_distortion_tests, get_test_
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--log_dir', type=str, default='save_dir')
-    parser.add_argument('--num_trains', type=int, nargs='+', default=None)
+    parser.add_argument('--num_trains', type=int, nargs='+', default=[5000])
     args = parser.parse_args()
     return args
 
@@ -63,9 +63,9 @@ def get_num_train_acc_arch_dict_old(logdir='save_dir', net_type='resnet',
     return arch_dict
 
 
-def get_num_train_acc_arch_dict(logdir='save_dir', net_type='resnet',
+def get_num_train_acc_arch_dict(logdir='save_dir', net_type='vgg',
                                 num_train=1000, acc_type='normal',
-                                base_date='2019-06-11-03-37'):
+                                base_date='2019-07-18'):
     """ Looks like:
         arch_dict[configs]
         arch_dict['accs'] = []
@@ -111,7 +111,7 @@ def get_num_train_acc_arch_dict(logdir='save_dir', net_type='resnet',
     return arch_dict
 
 def get_imgs(nr=0):
-    paths = get_distortion_tests('test/')
+    paths = get_distortion_tests('test-distortions/')
     # imgs = np.zeros(len(paths))
     imgs = []
     for idx, path in enumerate(paths):
@@ -193,7 +193,7 @@ def plot_influence(arch_string, s_tests_id=0, title=None):
 if __name__ == "__main__":
     args = parse_args()
     arch_dicts = []
-    args.num_trains = [500, 1000, 5000, 10000, 25000]
+    # args.num_trains = [500, 1000, 5000, 10000, 25000]
     accs = {}
     types = get_distortion_tests_name()
     for num_train in args.num_trains:
@@ -202,9 +202,10 @@ if __name__ == "__main__":
             accs[typ] = d['avg_acc']
         arch_dicts.append(d)
 
-        with open(f'resnet-per_type.csv', 'a') as fout:
+        with open(f'vgg-per_type.csv', 'a') as fout:
             # wrtr = csv.writer(fout)
             wrtr = csv.DictWriter(fout, fieldnames=types)
+            wrtr.writeheader()
             wrtr.writerow(accs)
 
             # wrtr.writerow([i for i in range(len(d['accs']))])
