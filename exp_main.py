@@ -17,7 +17,7 @@ from utils import create_folder
 
 # For debugging in vscode
 if not 'nbpc' in platform.node():
-multiprocessing.set_start_method('spawn', True)
+    multiprocessing.set_start_method('spawn', True)
 
 if __name__ == '__main__':
 
@@ -50,23 +50,31 @@ if __name__ == '__main__':
     args = parser.parse_args()
     config = vars(args)
 
+    if '/' != args.save_dir[-1:]:
+        config['save_dir'] = f'{args.save_dir}/'
+
     # --- Optimization of the CNN architecture ---
     if args.mode == 'evolution':
-        # Create CGP configuration and save network information
-        network_info = CgpInfoConvSet(
-            arch_type=config['arch_type'], rows=args.num_breadth,
-                cols=depth, level_back=2,
-            min_active_num=args.num_min_depth,
-            max_active_num=args.num_max_depth)
-        with open(args.net_info_file, mode='wb') as f:
-            pickle.dump(network_info, f)
-
         img_size = args.img_size
         num_epoch = args.num_epoch
         batchsize = args.batch_size
         accs = {}
         create_folder(config['save_dir'])
         for i in range(config['archs_per_task']):
+
+            depth = random.randrange(config['num_min_depth'],
+                                     config['num_max_depth'])
+            config['num_depth'] = depth
+            print(f'Depth = {depth}')
+            # Create CGP configuration and save network information
+            network_info = CgpInfoConvSet(
+                arch_type=config['arch_type'], rows=args.num_breadth,
+                cols=depth, level_back=2,
+                min_active_num=args.num_min_depth,
+                max_active_num=args.num_max_depth)
+            with open(args.net_info_file, mode='wb') as f:
+                pickle.dump(network_info, f)
+
             with open(f"{config['save_dir']}accuracy{args.gpuID}.txt", 'at') as f:
                 with open(f"{config['save_dir']}config.json", 'w+') as cfg_f:
                     json.dump(config, cfg_f, indent=2)
@@ -126,7 +134,7 @@ if __name__ == '__main__':
         test_dir = '/ceph/blume/datasets/CIFAR10-C/test/'
         if not Path(test_dir).exists():
             test_dir = '/home/blume/datasets/CIFAR10-C/test/'
-        if not Path(test_dir).exists():
+        if 'yagi22' in platform.node():
             test_dir = '/home/suganuma/dataset/CIFAR10-C/test/'
         test_dists = [
             'brightness.npy',

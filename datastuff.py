@@ -2,6 +2,7 @@ import torchvision.transforms as transforms
 from torch.utils.data import Dataset, DataLoader
 import torchvision.datasets as dset
 import numpy as np
+import platform
 
 from pathlib import Path
 
@@ -11,8 +12,8 @@ def get_distortion_tests(test_dir=None):
         test_dir = '/ceph/blume/datasets/CIFAR10-C/test/'
         if not Path(test_dir).exists():
             test_dir = '/home/blume/datasets/CIFAR10-C/test/'
-        if not Path(self.label_path).exists():
-            self.label_path = '/home/suganuma/dataset/CIFAR10-C/test/'
+        if 'yagi22' in platform.node():
+            test_dir = '/home/suganuma/dataset/CIFAR10-C/test/'
     test_dists = [
         'brightness.npy',
         'contrast.npy',
@@ -74,7 +75,7 @@ class NoisySet(Dataset):
         self.label_path = '/ceph/blume/datasets/CIFAR10-C/test/labels.npy'
         if not Path(self.label_path).exists():
             self.label_path = '/home/blume/datasets/CIFAR10-C/test/labels.npy'
-        if not Path(self.label_path).exists():
+        if 'yagi22' in platform.node():
             self.label_path = '/home/suganuma/dataset/CIFAR10-C/test/labels.npy'
         # self.label_path = 'labels.npy'
         self.data = np.load(test_path)

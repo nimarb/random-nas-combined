@@ -4,18 +4,20 @@ import datetime
 import sys
 import os
 import time
+import subprocess
 from distutils.util import strtobool
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--server_names', nargs='+', metavar='yagiXX', type=str, required=True)
+        '--server_names', nargs='+', metavar='yagiXX', type=str)
     parser.add_argument(
-        '--file_to_run', metavar='XXXX.sh', type=str, required=True)
+        '--file_to_run', metavar='XXXX.sh', type=str)
     parser.add_argument('--num_train', type=int)
-    parser.add_argument('--archs_per_task', type=int)
+    parser.add_argument('--archs_per_task', type=int, default=5)
     parser.add_argument('--archs_per_num_train', type=int, default=0)
+    parser.add_argument('--arch_type', type=str, default='resnet')
 
     parser.add_argument('--init_channels', type=int, default=16)
     parser.add_argument('--num_layers', type=int, default=3)
@@ -42,6 +44,59 @@ def ssh(command, yagi):
         command: string, command to execute
         yagi: string, yagi to run the command on"""
     return sh.ssh('-i', '/home/blume/.ssh/id_ed25519', command, yagi)
+
+
+def run_nas_shell(num_train, gpu_num, id,
+            batch_size, archs_per_task, arch_type):
+    """Runs the influence function calculation on a specified yagi
+
+    Arguments:
+        start: int, per class test sample index at which to start
+        per_class: int, how many images to process per class
+        gpu_num: str, gpu id to run the influence function on. can be a single
+            number or a comma seperated string of multiple ids
+        file_to_run: str, filename of the script to run on yagi
+        batch_size: int, reduce for small GPU mem machines
+        recursion_depth: int, pass
+        r_avg: int, pass"""
+    print(f'running random NAS: num_train: {num_train}')
+    time = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S.%f")
+    env_vars = os.environ.copy()
+    env_vars["CUDA_VISIBLE_DEVICES"] = gpu_num
+    with open(f"./log/{arch_type}-{time}-{num_train}-{archs_per_task}-id{id}.log", 'w+') as logf:
+        # sh.python3(
+        subprocess.Popen(f'python3 exp_main.py --arch_type {arch_type} --archs_per_task {archs_per_task} --save_dir save_dir/{arch_type}-{time}-{num_train}-{archs_per_task}-id{id}/ --num_train {num_train}',
+            shell=True,
+            env=env_vars,
+            stdout=logf,
+            stderr=logf)
+        # _out=f"./log/{arch_type}-{time}-{num_train}-{archs_per_task}-id{id}.log",
+        # _err=f"./log/{arch_type}-{time}-{num_train}-{archs_per_task}-id{id}-err.log",
+        # _bg=True,
+        # _env=env_vars)
+
+        # with open(f"./log/{arch_type}-{time}-{num_train}-{archs_per_task}-id{id}.log", 'w+') as logf:
+        # # sh.python3(
+        # subprocess.Popen([
+        #         # 'python3',
+        #         'exp_main.py',
+        #         '--arch_type',
+        #         f'{arch_type}',
+        #         '--archs_per_task',
+        #         f'{archs_per_task}',
+        #         '--save_dir',
+        #         f'save_dir/{arch_type}-{time}-{num_train}-{archs_per_task}-id{id}/',
+        #         '--num_train',
+        #         f'{num_train}'
+        #     ],
+        #     shell=True,
+        #     env=env_vars,
+        #     stdout=logf,
+        #     stderr=logf)
+        # # _out=f"./log/{arch_type}-{time}-{num_train}-{archs_per_task}-id{id}.log",
+        # # _err=f"./log/{arch_type}-{time}-{num_train}-{archs_per_task}-id{id}-err.log",
+        # # _bg=True,
+        # # _env=env_vars)
 
 
 def run_nas(yagi, num_train, gpu_num, file_to_run, id,
@@ -73,15 +128,19 @@ def run_nas(yagi, num_train, gpu_num, file_to_run, id,
         _env=env_vars)
 
 
-def get_available_gpus(yagi):
+def get_available_gpus(yagi=0, local=False):
     """Returns the number of available gpus on a yagi
 
     Arguments:
         yagi: string, name of yagi
+        local: bool, indicates whether to return the local number of GPUs
 
     Returns:
         num_gpus: int, number of gpus available on the yagi"""
-    num_gpus = int(ssh(yagi, 'lspci | grep VGA | grep NVIDIA | wc -l'))
+    if not local:
+        num_gpus = int(ssh(yagi, 'lspci | grep VGA | grep NVIDIA | wc -l'))
+    elif local:
+        num_gpus = int(sh.bash('-e', 'lspci | grep VGA | grep NVIDIA | wc -l'))
     return num_gpus
 
 
@@ -100,6 +159,31 @@ def train_per_dset_size(args, training_samples, file_to_run, availabe_yagis):
             # yagi, num_train, args.init_channels, gpus_to_use,
             # file_to_run, args.batch_size, args.num_layers,
             # args.num_nodes, args.num_train_determ)
+
+
+def train_once_per_gpu_local(args, file_to_run):
+    total_gpus = 6
+    # total_gpus += get_available_gpus(local=True)
+    if 0 != args.archs_per_num_train:
+        archs_per_task = round(args.archs_per_num_train /
+                               (total_gpus - args.gpu_start))
+    else:
+        archs_per_task = args.archs_per_task
+
+    print(f'Running with: {archs_per_task} archs per task')
+
+    # gpus = get_available_gpus(local=True)
+    gpus = 6
+    print(f'Available gpus: {gpus}')
+
+    for gpu in range(args.gpu_start, gpus):
+        gpulst = [gpu+i for i in range(args.gpu_start, args.gpus_per_task)]
+        gpus_to_use = ','.join(str(x) for x in gpulst)
+        print(f'Running on GPU ids: {gpus_to_use}')
+
+        run_nas_shell(
+            args.num_train, gpus_to_use,
+            gpu, args.batch_size, archs_per_task, args.arch_type)
 
 
 def train_once_per_gpu(args, file_to_run, availabe_yagis):
@@ -168,13 +252,14 @@ if __name__ == "__main__":
     availabe_yagis = args.server_names
     file_to_run = args.file_to_run
 
-    check_if_low_mem_yagi_involved(availabe_yagis)
+    # check_if_low_mem_yagi_involved(availabe_yagis)
 
     training_samples = [1000, 5000, 10000, 50000]
 
     # train_per_dset_size(args, training_samples, file_to_run, availabe_yagis)
     # train_per_genotype(args, args.genotype, file_to_run, availabe_yagis)
-    train_once_per_gpu(args, file_to_run, availabe_yagis)
+    # train_once_per_gpu(args, file_to_run, availabe_yagis)
+    train_once_per_gpu_local(args, file_to_run)
 
     # for yagi in availabe_yagis:
     #     gpus = get_available_gpus(yagi)
