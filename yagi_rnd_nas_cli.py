@@ -128,19 +128,18 @@ def run_nas(yagi, num_train, gpu_num, file_to_run, id,
         _env=env_vars)
 
 
-def get_available_gpus(yagi=0, local=False):
+def get_available_gpus(yagi=None):
     """Returns the number of available gpus on a yagi
 
     Arguments:
         yagi: string, name of yagi
-        local: bool, indicates whether to return the local number of GPUs
 
     Returns:
         num_gpus: int, number of gpus available on the yagi"""
-    if not local:
+    if not yagi:
+        num_gpus = int(sh.wc(sh.grep(sh.grep(sh.lspci(), 'VGA'), 'NVIDIA'), '-l'))
+    else:
         num_gpus = int(ssh(yagi, 'lspci | grep VGA | grep NVIDIA | wc -l'))
-    elif local:
-        num_gpus = int(sh.bash('-e', 'lspci | grep VGA | grep NVIDIA | wc -l'))
     return num_gpus
 
 
@@ -161,9 +160,8 @@ def train_per_dset_size(args, training_samples, file_to_run, availabe_yagis):
             # args.num_nodes, args.num_train_determ)
 
 
-def train_once_per_gpu_local(args, file_to_run):
-    total_gpus = 6
-    # total_gpus += get_available_gpus(local=True)
+def train_once_per_gpu_local(args):
+    total_gpus += get_available_gpus()
     if 0 != args.archs_per_num_train:
         archs_per_task = round(args.archs_per_num_train /
                                (total_gpus - args.gpu_start))
@@ -172,8 +170,7 @@ def train_once_per_gpu_local(args, file_to_run):
 
     print(f'Running with: {archs_per_task} archs per task')
 
-    # gpus = get_available_gpus(local=True)
-    gpus = 6
+    gpus = get_available_gpus()
     print(f'Available gpus: {gpus}')
 
     for gpu in range(args.gpu_start, gpus):
