@@ -10,6 +10,8 @@ from distutils.util import strtobool
 
 def parse_args():
     parser = argparse.ArgumentParser()
+    parser.add_argument('--run_type', type=str, choices=['local', 'qsub'],
+                        required=True)
     parser.add_argument(
         '--server_names', nargs='+', metavar='yagiXX', type=str)
     parser.add_argument(
@@ -233,7 +235,7 @@ def train_per_genotype(args, genotypes, file_to_run, availabe_yagis):
 
 def check_if_low_mem_yagi_involved(availabe_yagis):
     return_value = False
-    low_gpu_mem_yagis = ['yagi10', 'yagi11']
+    low_gpu_mem_yagis = ['yagi10']
     for yagi in availabe_yagis:
         if yagi in low_gpu_mem_yagis:
             return_value = True
@@ -249,14 +251,15 @@ if __name__ == "__main__":
     availabe_yagis = args.server_names
     file_to_run = args.file_to_run
 
-    # check_if_low_mem_yagi_involved(availabe_yagis)
+    training_samples = [500, 1000, 5000, 10000, 25000]
 
-    training_samples = [1000, 5000, 10000, 50000]
-
-    # train_per_dset_size(args, training_samples, file_to_run, availabe_yagis)
-    # train_per_genotype(args, args.genotype, file_to_run, availabe_yagis)
-    # train_once_per_gpu(args, file_to_run, availabe_yagis)
-    train_once_per_gpu_local(args, file_to_run)
+    if 'local' == args.run_type:
+        train_once_per_gpu_local(args)
+    elif 'qsub' == args.run_type:
+        check_if_low_mem_yagi_involved(availabe_yagis)
+        # train_per_dset_size(args, training_samples, file_to_run, availabe_yagis)
+        # train_per_genotype(args, args.genotype, file_to_run, availabe_yagis)
+        train_once_per_gpu(args, file_to_run, availabe_yagis)
 
     # for yagi in availabe_yagis:
     #     gpus = get_available_gpus(yagi)

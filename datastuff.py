@@ -9,10 +9,10 @@ from pathlib import Path
 
 def get_distortion_tests(test_dir=None):
     if not test_dir:
-        test_dir = '/ceph/blume/datasets/CIFAR10-C/test/'
-        if not Path(test_dir).exists():
-            test_dir = '/home/blume/datasets/CIFAR10-C/test/'
-        if 'yagi22' in platform.node():
+        test_dir = '/home/blume/datasets/CIFAR10-C/test/'
+        if 'nbpc' in platform.node():
+            test_dir = '/home/nimar/datasets/CIFAR10-C/test/'
+        elif 'yagi22' in platform.node() or 'yagi21' in platform.node():
             test_dir = '/home/suganuma/dataset/CIFAR10-C/test/'
     test_dists = [
         'brightness.npy',
@@ -72,10 +72,10 @@ class NoisySet(Dataset):
 
     def __init__(self, test_path):
         self.test_path = test_path
-        self.label_path = '/ceph/blume/datasets/CIFAR10-C/test/labels.npy'
-        if not Path(self.label_path).exists():
-            self.label_path = '/home/blume/datasets/CIFAR10-C/test/labels.npy'
-        if 'yagi22' in platform.node():
+        self.label_path = '/home/blume/datasets/CIFAR10-C/test/labels.npy'
+        if 'nbpc' in platform.node():
+            self.label_path = '/home/nimar/datasets/CIFAR10-C/test/labels.npy'
+        elif 'yagi22' in platform.node() or 'yagi21' in platform.node():
             self.label_path = '/home/suganuma/dataset/CIFAR10-C/test/labels.npy'
         # self.label_path = 'labels.npy'
         self.data = np.load(test_path)

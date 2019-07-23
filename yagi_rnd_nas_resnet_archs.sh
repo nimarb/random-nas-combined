@@ -10,6 +10,7 @@ python3 exp_main.py \
     --archs_per_task "${archs_per_task}" \
     --save_dir save_dir/resnet-"${time}"-"${num_train}"-"${archs_per_task}"-id"${id}"/ \
     --num_train "${num_train}" --archs_per_task "${archs_per_task}" \
+    --arch_type resnet \
     >> "./log/resnet-${time}-${num_train}-${archs_per_task}-id${id}.log" 2>&1
 
 

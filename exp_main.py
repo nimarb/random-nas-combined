@@ -16,7 +16,7 @@ from cnn_train import CNN_train
 from utils import create_folder
 
 # For debugging in vscode
-if not 'nbpc' in platform.node():
+if 'nbpc' in platform.node():
     multiprocessing.set_start_method('spawn', True)
 
 if __name__ == '__main__':
@@ -45,7 +45,7 @@ if __name__ == '__main__':
     parser.add_argument('--num_max_depth', type=int, default=150)
     parser.add_argument('--num_breadth', type=int, default=1)
     parser.add_argument('--img_size', type=int, default=32)
-    parser.add_argument('--arch_type', type=str, default='vgg')
+    parser.add_argument('--arch_type', type=str, default='resnet')
     # parser.add_argument('--data_dir', type=str, default='./')
     args = parser.parse_args()
     config = vars(args)
@@ -131,10 +131,10 @@ if __name__ == '__main__':
         cgp.load_log(list(data.tail(1).values.flatten().astype(int)))
         print(cgp._log_data(net_info_type='active_only', start_time=0))
         # Retraining the network
-        test_dir = '/ceph/blume/datasets/CIFAR10-C/test/'
-        if not Path(test_dir).exists():
-            test_dir = '/home/blume/datasets/CIFAR10-C/test/'
-        if 'yagi22' in platform.node():
+        test_dir = '/home/blume/datasets/CIFAR10-C/test/'
+        if 'nbpc' in platform.node():
+            test_dir = '/home/nimar/datasets/CIFAR10-C/test/'
+        elif 'yagi22' in platform.node() or 'yagi21' in platform.node():
             test_dir = '/home/suganuma/dataset/CIFAR10-C/test/'
         test_dists = [
             'brightness.npy',
