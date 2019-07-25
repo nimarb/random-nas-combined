@@ -2,9 +2,13 @@ __pycache__/*
 .mypy_cache/*
 *.pyc
 save_dir/*
+save_dir_pre-rnd-depth/*
+save_dir_depth-30-150/*
 cifar-10-batches-py/*
 log/*
 logs/*
+logs_pre-rnd-depth/*
+log_depth-30-150/*
 sample_indices/*
 test-distortions/
 *.pickle

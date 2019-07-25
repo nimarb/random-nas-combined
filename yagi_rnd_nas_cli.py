@@ -163,7 +163,7 @@ def train_per_dset_size(args, training_samples, file_to_run, availabe_yagis):
 
 
 def train_once_per_gpu_local(args):
-    total_gpus += get_available_gpus()
+    total_gpus = get_available_gpus()
     if 0 != args.archs_per_num_train:
         archs_per_task = round(args.archs_per_num_train /
                                (total_gpus - args.gpu_start))
@@ -235,7 +235,7 @@ def train_per_genotype(args, genotypes, file_to_run, availabe_yagis):
 
 def check_if_low_mem_yagi_involved(availabe_yagis):
     return_value = False
-    low_gpu_mem_yagis = ['yagi10']
+    low_gpu_mem_yagis = ['yagi10', 'yagi13']
     for yagi in availabe_yagis:
         if yagi in low_gpu_mem_yagis:
             return_value = True
