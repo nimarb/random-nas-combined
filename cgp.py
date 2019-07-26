@@ -126,7 +126,7 @@ class Individual(object):
         return self.is_active.sum()
 
     def active_net_list(self):
-        if self.arch_type == 'resnet':
+        if self.arch_type == 'resnet' or self.arch_type == 'densenet':
             net_list = [["input", 0, 0]]
         elif self.arch_type == 'vgg':
             net_list = [["input", 0]]

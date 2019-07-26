@@ -20,7 +20,15 @@ class CgpInfoConvSet(object):
                          'S_SepBlock_32_3',  'S_SepBlock_32_5',
                          'S_SepBlock_64_3',  'S_SepBlock_64_5',
                          'Max_Pool', 'Avg_Pool']
-
+        func_type_densenet = ['S_SepBlock_16_3',  'S_SepBlock_16_5',
+                            'S_SepBlock_32_3',  'S_SepBlock_32_5',
+                            'S_SepBlock_64_3',  'S_SepBlock_64_5',
+                            'S_DenseBlock_16_3',  'S_DenseBlock_16_5',
+                            'S_DenseBlock_32_3',  'S_DenseBlock_32_5',
+                            'S_DenseBlock_64_3',  'S_DenseBlock_64_5',
+                            'Sum','Sum',
+                            'Max_Pool', 'Avg_Pool']
+        
         func_in_num_resnet = [1, 1,
                               1, 1,
                               1, 1,
@@ -36,6 +44,14 @@ class CgpInfoConvSet(object):
                            1, 1,
                            1, 1,
                            1, 1]
+        func_in_num_densenet = [1, 1,
+                              1, 1,
+                              1, 1,
+                              1, 1,
+                              1, 1,
+                              1, 1,
+                              2, 2,
+                              1, 1]
 
         if arch_type == 'resnet':
             self.func_type = func_type_resnet
@@ -43,6 +59,9 @@ class CgpInfoConvSet(object):
         elif arch_type == 'vgg':
             self.func_type = func_type_vgg
             self.func_in_num = func_in_num_vgg
+        elif arch_type == 'densenet':
+            self.func_type = func_type_densenet
+            self.func_in_num = func_in_num_densenet
 
         self.out_num = 1
         self.out_type = ['full']

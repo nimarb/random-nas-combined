@@ -130,6 +130,7 @@ class ResBlock(nn.Module):
         self.relu = nn.ReLU(inplace=True)
 
     def forward(self, inputs1, inputs2):
+        # inputs1, inputs2 is a batch of image data
         x = self.conv1(inputs1)
         in_data = [x, inputs2]
         # # check of the image size
@@ -140,6 +141,44 @@ class ResBlock(nn.Module):
         #         in_data[large_in_id] = F.max_pool2d(in_data[large_in_id], 2, 2, 0)
 
         # check of the channel size
+        # torch.Size([128, 64, 32, 32]) --> size(1) = 64
+        if in_data[0].size(1) < in_data[1].size(1):
+            small_ch_id, large_ch_id = (0, 1)
+        else:
+            small_ch_id, large_ch_id = (1, 0)
+        offset = int(in_data[large_ch_id].size()[1]
+                     - in_data[small_ch_id].size()[1])
+        if offset != 0:
+            # This piece of codes enlarges the smaller tensor so as to match
+            # the size of the bigger tensor by padding it with zeros. This is in
+            # the channel (filter) dimension.
+            tmp = in_data[large_ch_id].data[:, :offset, :, :]
+            tmp = Variable(tmp).clone()
+            in_data[small_ch_id] = torch.cat(
+                [in_data[small_ch_id], tmp * 0], 1)
+        out = torch.add(in_data[0], in_data[1])
+        return self.relu(out)
+
+
+class DenseBlock(nn.Module):
+    def __init__(self, in_size, out_size, kernel, stride):
+        super(DenseBlock, self).__init__()
+        pad_size = kernel // 2
+        self.conv1 = nn.Sequential(nn.Conv2d(in_size, out_size, kernel,
+                                             stride=stride, padding=pad_size,
+                                             bias=False),
+                                   nn.BatchNorm2d(out_size),
+                                   nn.ReLU(inplace=True),
+                                   nn.Conv2d(in_size, out_size, kernel,
+                                             stride=stride, padding=pad_size,
+                                             bias=False),
+                                   nn.BatchNorm2d(out_size))
+        self.relu = nn.ReLU(inplace=True)
+
+    def forward(self, inputs1, inputs2):
+        x = self.conv1(inputs1)
+        in_data = [x, inputs2]
+        # check of the channel size
         if in_data[0].size(1) < in_data[1].size(1):
             small_ch_id, large_ch_id = (0, 1)
         else:
@@ -149,10 +188,18 @@ class ResBlock(nn.Module):
         if offset != 0:
             tmp = in_data[large_ch_id].data[:, :offset, :, :]
             tmp = Variable(tmp).clone()
-            in_data[small_ch_id] = torch.cat(
-                [in_data[small_ch_id], tmp * 0], 1)
-        out = torch.add(in_data[0], in_data[1])
+            # in_data[small_ch_id] = torch.cat(
+                # [in_data[small_ch_id], tmp * 0], 1)
+        out = torch.cat([in_data[0], in_data[1]])
         return self.relu(out)
+
+    def _bn_function_factory(self, norm, relu, conv):
+        def bn_function(*inputs):
+            concated_features = torch.cat(inputs, 1)
+            bottleneck_output = conv(relu(norm(concated_features)))
+            return bottleneck_output
+
+        return bn_function
 
 
 class Sum(nn.Module):
@@ -351,6 +398,78 @@ class CGP2CNN(nn.Module):
                         sys.exit('error at CGPCNN init')
                 i += 1
 
+        elif arch_type == 'densenet':
+             for name, in1, in2 in self.cgp:
+                if name == 'input' in name:
+                    i += 1
+                    continue
+                elif name == 'full':
+                    self.encode.append(nn.Linear(self.channel_num[in1],
+                                                 n_class))
+                elif name == 'Max_Pool' or name == 'Avg_Pool':
+                    self.channel_num[i] = self.channel_num[in1]
+                    self.size[i] = int(self.size[in1] / 2)
+                    key = name.split('_')
+                    func = key[0]
+                    if func == 'Max':
+                        self.encode.append(nn.MaxPool2d(2, 2))
+                    else:
+                        self.encode.append(nn.AvgPool2d(2, 2))
+                elif name == 'Concat':
+                    self.channel_num[i] = self.channel_num[in1] \
+                        + self.channel_num[in2]
+                    if self.size[in1] < self.size[in2]:
+                        small_in_id, large_in_id = (in1, in2)
+                    else:
+                        small_in_id, large_in_id = (in2, in1)
+                    self.size[i] = self.size[small_in_id]
+                    self.encode.append(Concat())
+                elif name == 'Sum':
+                    if self.channel_num[in1] < self.channel_num[in2]:
+                        small_in_id, large_in_id = (in1, in2)
+                    else:
+                        small_in_id, large_in_id = (in2, in1)
+                    self.channel_num[i] = self.channel_num[large_in_id]
+                    if self.size[in1] < self.size[in2]:
+                        small_in_id, large_in_id = (in1, in2)
+                    else:
+                        small_in_id, large_in_id = (in2, in1)
+                    self.size[i] = self.size[small_in_id]
+                    self.encode.append(Sum())
+                else:
+                    key = name.split('_')
+                    down = key[0]
+                    func = key[1]
+                    out_size = int(key[2])
+                    kernel = int(key[3])
+                    if down == 'S':
+                        if func == 'SepBlock':
+                            self.channel_num[i] = out_size
+                            self.size[i] = self.size[in1]
+                            self.encode.append(SepConv(self.channel_num[in1],
+                                                       out_size, kernel))
+                        elif func == 'DilBlock':
+                            self.channel_num[i] = out_size
+                            self.size[i] = self.size[in1]
+                            self.encode.append(DilConv(self.channel_num[in1],
+                                                       out_size, kernel))
+                        elif func == 'DenseBlock':
+                            in_data = [out_size, self.channel_num[in1]]
+                            if in_data[0] < in_data[1]:
+                                small_in_id, large_in_id = (0, 1)
+                            else:
+                                small_in_id, large_in_id = (1, 0)
+                            self.channel_num[i] = in_data[large_in_id]
+                            self.size[i] = self.size[in1]
+                            self.encode.append(DenseBlock(self.channel_num[in1],
+                                                          out_size, kernel,
+                                                          stride=1))
+                        else:
+                            sys.exit("error at CGPCNN init")
+                    else:
+                        sys.exit('error at CGPCNN init')
+                i += 1
+
         elif arch_type == 'vgg':
             for name, in1 in self.cgp:
                 if name == 'input' in name:
@@ -415,6 +534,9 @@ class CGP2CNN(nn.Module):
             elif isinstance(layer, DilConv):
                 outputs[nodeID] = layer(outputs[self.cgp[nodeID][1]])
             elif isinstance(layer, ResBlock):
+                outputs[nodeID] = layer(outputs[self.cgp[nodeID][1]],
+                                        outputs[self.cgp[nodeID][1]])
+            elif isinstance(layer, DenseBlock):
                 outputs[nodeID] = layer(outputs[self.cgp[nodeID][1]],
                                         outputs[self.cgp[nodeID][1]])
             elif isinstance(layer, torch.nn.modules.pooling.MaxPool2d) \
