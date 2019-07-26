@@ -63,7 +63,7 @@ def get_distortion_tests_name():
         'snow',
         'spatter',
         'speckle_noise',
-        'zoom_bluy'
+        'zoom_blur'
     ]
     return test_names
 

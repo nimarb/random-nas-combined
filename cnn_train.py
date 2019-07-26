@@ -186,7 +186,7 @@ class CNN_train():
             'snow',
             'spatter',
             'speckle_noise',
-            'zoom_bluy'
+            'zoom_blur'
         ]
         test_dists = get_distortion_tests()
         dloader = self.test_dataloader
