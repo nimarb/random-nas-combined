@@ -13,7 +13,7 @@ from datastuff import get_distortion_tests_name, get_distortion_tests, get_test_
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--log_dir', type=str, default='save_dir')
-    parser.add_argument('--num_trains', type=int, nargs='+', default=[5000])
+    parser.add_argument('--num_trains', type=int, nargs='+', default=[5000, 10000])
     args = parser.parse_args()
     return args
 
@@ -63,9 +63,59 @@ def get_num_train_acc_arch_dict_old(logdir='save_dir', net_type='resnet',
     return arch_dict
 
 
-def get_num_train_acc_arch_dict(logdir='save_dir', net_type='vgg',
+def get_arch_dict(logdir='save_dir', net_type='resnet', base_date='2019-07'):
+    """ Looks like:
+        arch_dict[0..num_trials]
+        arch_dict[0]['accuracies']['brightness'] = 0.2134234
+        arch_dict[0]['num_depth'] = 47"""
+    if isinstance(logdir, str):
+        logdir = Path(logdir)
+
+    base_str = f'{net_type}-{base_date}-*-*'
+    acc_paths = sorted(logdir.glob(f'{base_str}/accuracies.json'))
+    arch_paths = sorted(logdir.glob(f'{base_str}/log-active.txt'))
+
+    arch_dict = {}
+    accs = []
+    archs = []
+
+    # combine accuracies and network architecture
+    acc_ctr = 0
+    for acc_p in acc_paths:
+        with open(acc_p, 'r') as acc_f:
+            acc = json.load(acc_f)
+            for _, value in acc.items():
+                with open(acc_p.parent.joinpath('config.json')) as cfg_f:
+                    config = json.load(cfg_f)
+                arch_dict[acc_ctr] = config
+                arch_dict[acc_ctr]['accuracies'] = value
+                acc_ctr += 1
+
+    # extract actual layer depth and arch string from `log-active.txt` file
+    arch_ctr = 0
+    for arch_p in arch_paths:
+        with open(arch_p, 'r') as arch_f:
+            lines = arch_f.readlines()
+            for line in lines:
+                idx = line.index(',,')
+                idx_depth_end = line.index(',"')
+                arch_str = line[idx_depth_end+2:-2]
+                num_depth = line[idx+2:idx_depth_end]
+                arch_dict[arch_ctr]['num_depth'] = int(num_depth)
+                arch_dict[arch_ctr]['arch_str'] = arch_str
+                arch_ctr += 1
+
+
+    # arch_dict['num_train'] = num_train
+    # arch_dict['avg_acc'] = sum(accs) / len(accs)
+    # arch_dict['max_acc'] = max(accs)
+    # arch_dict['archs'] = archs
+    return arch_dict
+
+
+def get_num_train_acc_arch_dict(logdir='save_dir', net_type='resnet',
                                 num_train=1000, acc_type='normal',
-                                base_date='2019-07-18'):
+                                base_date='2019-07-25'):
     """ Looks like:
         arch_dict[configs]
         arch_dict['accs'] = []
@@ -109,6 +159,7 @@ def get_num_train_acc_arch_dict(logdir='save_dir', net_type='vgg',
     arch_dict['max_acc'] = max(accs)
     arch_dict['archs'] = archs
     return arch_dict
+
 
 def get_imgs(nr=0):
     paths = get_distortion_tests('test-distortions/')
@@ -195,6 +246,7 @@ if __name__ == "__main__":
     arch_dicts = []
     # args.num_trains = [500, 1000, 5000, 10000, 25000]
     accs = {}
+    arch_d = get_arch_dict(net_type='vgg')
     types = get_distortion_tests_name()
     for num_train in args.num_trains:
         for typ in types:
@@ -202,13 +254,16 @@ if __name__ == "__main__":
             accs[typ] = d['avg_acc']
         arch_dicts.append(d)
 
-        with open(f'vgg-per_type.csv', 'a') as fout:
+        # with open(f'vgg-per_type.csv', 'a') as fout:
             # wrtr = csv.writer(fout)
-            wrtr = csv.DictWriter(fout, fieldnames=types)
-            wrtr.writeheader()
-            wrtr.writerow(accs)
+            # wrtr = csv.DictWriter(fout, fieldnames=types)
+            # wrtr.writeheader()
+            # wrtr.writerow(accs)
 
             # wrtr.writerow([i for i in range(len(d['accs']))])
             # wrtr.writerow(lay_num)
     # plot_influence('hi')
+    print(arch_dicts)
+    with open('vgg.json', 'w+') as fout:
+        json.dump(arch_d, fout, indent=2)
 
