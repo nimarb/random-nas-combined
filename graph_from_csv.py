@@ -15,6 +15,8 @@ with open('resnet.json', 'r') as fin:
 with open('vgg.json', 'r') as fin:
     vgg_d = json.load(fin)
 
+num_trains = [500, 1000, 5000, 10000, 25000]
+
 def analyse_arch_dict(arch_dict, num_train=1000):
     depths = []
     normal_accs = []

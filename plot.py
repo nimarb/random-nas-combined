@@ -263,7 +263,6 @@ if __name__ == "__main__":
             # wrtr.writerow([i for i in range(len(d['accs']))])
             # wrtr.writerow(lay_num)
     # plot_influence('hi')
-    print(arch_dicts)
     with open('vgg.json', 'w+') as fout:
         json.dump(arch_d, fout, indent=2)
 

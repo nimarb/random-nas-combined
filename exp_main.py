@@ -45,7 +45,7 @@ if __name__ == '__main__':
     parser.add_argument('--num_max_depth', type=int, default=70)
     parser.add_argument('--num_breadth', type=int, default=1)
     parser.add_argument('--img_size', type=int, default=32)
-    parser.add_argument('--arch_type', type=str, default='resnet')
+    parser.add_argument('--arch_type', type=str, default='densenet')
     # parser.add_argument('--data_dir', type=str, default='./')
     args = parser.parse_args()
     config = vars(args)
@@ -64,6 +64,10 @@ if __name__ == '__main__':
 
             depth = random.randrange(config['num_min_depth'],
                                      config['num_max_depth'])
+            ###########
+            # DEBUG ONLY
+            depth = 20
+            ###########
             config['num_depth'] = depth
             print(f'Depth = {depth}')
             # Create CGP configuration and save network information

@@ -8,6 +8,10 @@ class CgpInfoConvSet(object):
     def __init__(self, arch_type='resnet', rows=30, cols=40, level_back=40,
                  min_active_num=8, max_active_num=50):
         self.input_num = 1  # number (ID) of the input node (usually 1 (start))
+        # S_BLOCKTYPE_out-size_kernel for ResNet type
+        # `in_size` is determined by looking at CGP, which layer the current one
+        # is connected to, and then looking at its `out_size` in `self.channel_num`
+        # in `cnn_model.py`
         func_type_resnet = ['S_SepBlock_16_3',  'S_SepBlock_16_5',
                             'S_SepBlock_32_3',  'S_SepBlock_32_5',
                             'S_SepBlock_64_3',  'S_SepBlock_64_5',
@@ -20,12 +24,16 @@ class CgpInfoConvSet(object):
                          'S_SepBlock_32_3',  'S_SepBlock_32_5',
                          'S_SepBlock_64_3',  'S_SepBlock_64_5',
                          'Max_Pool', 'Avg_Pool']
-        func_type_densenet = ['S_SepBlock_16_3',  'S_SepBlock_16_5',
-                            'S_SepBlock_32_3',  'S_SepBlock_32_5',
-                            'S_SepBlock_64_3',  'S_SepBlock_64_5',
-                            'S_DenseBlock_16_3',  'S_DenseBlock_16_5',
-                            'S_DenseBlock_32_3',  'S_DenseBlock_32_5',
-                            'S_DenseBlock_64_3',  'S_DenseBlock_64_5',
+        # S_BLOCKTYPE_out-size_num-layer for DenseNet type
+        # func_type_densenet = ['S_SepBlock_16_3',  'S_SepBlock_16_5',
+                            # 'S_SepBlock_32_3',  'S_SepBlock_32_5',
+                            # 'S_SepBlock_64_3',  'S_SepBlock_64_5',
+        func_type_densenet = ['S_DenseBlock_16_6',  'S_DenseBlock_16_12',
+                            'S_DenseBlock_16_24',  'S_DenseBlock_16_16',
+                            'S_DenseBlock_32_6',  'S_DenseBlock_32_12',
+                            'S_DenseBlock_32_24',  'S_DenseBlock_32_16',
+                            'S_DenseBlock_64_6',  'S_DenseBlock_64_12',
+                            'S_DenseBlock_64_24',  'S_DenseBlock_64_16',
                             'Sum','Sum',
                             'Max_Pool', 'Avg_Pool']
         
@@ -45,6 +53,9 @@ class CgpInfoConvSet(object):
                            1, 1,
                            1, 1]
         func_in_num_densenet = [1, 1,
+                              1, 1,
+                              1, 1,
+                              1, 1,
                               1, 1,
                               1, 1,
                               1, 1,

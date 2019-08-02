@@ -30,6 +30,33 @@ over the depth dimension. Besides, Resnet makes learn identity function easy,
 while DenseNet directly adds identity function.
 Source: [here](https://medium.com/@smallfishbigsea/densenet-2b0889854a92)
 
+#### Architecture
+
+Within a DenseBlock, each layer is directly connected to every other layer in
+front of it (feed-forward only).
+
+The **Block config** looks like this: `(6, 12, 24, 16)` and indicates how many
+layers each pooling block contains.
+
+##### Current bug in SepConv:
+
+```python
+RuntimeError: Given groups=32, weight of size 32 1 5 5, expected input[128, 16, 16, 16] to have 32 channels, but got 16 channels instead
+```
+
+##### Current bug in `checkpoint(bn_function)` in `_DenseLayer`
+
+```python
+RuntimeError: running_mean should contain 16 elements not 64
+```
+
+#### PyTorch implementations
+
+* [official pytorch implementation](https://github.com/pytorch/vision/blob/master/torchvision/models/densenet.py)
+  * Gives some errors, see above
+* [very clean implementation](https://github.com/kevinzakka/densenet)
+  * seems to have not ideal performance according to the author
+
 ## Bugs
 
 ### Number of layers hovers around 30
@@ -86,3 +113,20 @@ the selected layers. `level_back=1` means each layer is connected to its followi
 one.
 
 Attention: **THE FIX DESCRIBED ABOVE IS INCORRECT**
+
+The **correct fix** is, by making each layer directly connected to its previous
+layer and not randomising the connection. Then, we randomise the number `num_depth`
+at the beginning of execution.
+
+### Number of ResNet layers not random
+
+The number of layers for the ResNet structure is not random even though the `num_depth`
+variable is being randomised.
+
+#### Infos/observations of the bug
+
+* 
+
+#### Tried fixes
+
+#### Fix
