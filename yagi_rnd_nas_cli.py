@@ -25,6 +25,8 @@ def parse_args():
     parser.add_argument('--num_layers', type=int, default=3)
     parser.add_argument('--num_nodes', type=int, default=10)
     parser.add_argument('--batch_size', type=int, default=128)
+    parser.add_argument('--num_min_depth', type=int, default=20)
+    parser.add_argument('--num_max_depth', type=int, default=70)
     parser.add_argument('--gpu_start', type=int, default=0)
     parser.add_argument('--gpu_end', type=int, default=None)
     parser.add_argument('--gpus_per_task', type=int, default=1)
@@ -49,7 +51,7 @@ def ssh(command, yagi):
 
 
 def run_nas_shell(num_train, gpu_num, id,
-            batch_size, archs_per_task, arch_type):
+            batch_size, archs_per_task, arch_type, args):
     """Runs the influence function calculation on a specified yagi
 
     Arguments:
@@ -67,7 +69,7 @@ def run_nas_shell(num_train, gpu_num, id,
     env_vars["CUDA_VISIBLE_DEVICES"] = gpu_num
     with open(f"./log/{arch_type}-{time}-{num_train}-{archs_per_task}-id{id}.log", 'w+') as logf:
         # sh.python3(
-        subprocess.Popen(f'python3 exp_main.py --arch_type {arch_type} --archs_per_task {archs_per_task} --save_dir save_dir/{arch_type}-{time}-{num_train}-{archs_per_task}-id{id}/ --num_train {num_train}',
+        subprocess.Popen(f'python3 exp_main.py --arch_type {arch_type} --archs_per_task {archs_per_task} --num_min_depth {args.num_min_depth} --num_max_depth {args.num_max_depth} --save_dir save_dir/{arch_type}-{time}-{num_train}-{archs_per_task}-id{id}/ --num_train {num_train}',
             shell=True,
             env=env_vars,
             stdout=logf,
@@ -102,7 +104,7 @@ def run_nas_shell(num_train, gpu_num, id,
 
 
 def run_nas(yagi, num_train, gpu_num, file_to_run, id,
-            batch_size, archs_per_task=5):
+            batch_size, archs_per_task=5, num_min_depth=20, num_max_depth=70):
     """Runs the influence function calculation on a specified yagi
 
     Arguments:
@@ -126,6 +128,8 @@ def run_nas(yagi, num_train, gpu_num, file_to_run, id,
         '-v', f'id={id}',
         '-v', f'batch_size={batch_size}',
         '-v', f'archs_per_task={archs_per_task}',
+        '-v', f'num_min_depth={num_min_depth}',
+        '-v', f'num_max_depth={num_max_depth}',
         file_to_run,
         _env=env_vars)
 
@@ -182,7 +186,7 @@ def train_once_per_gpu_local(args):
 
         run_nas_shell(
             args.num_train, gpus_to_use,
-            gpu, args.batch_size, archs_per_task, args.arch_type)
+            gpu, args.batch_size, archs_per_task, args.arch_type, args)
 
 
 def train_once_per_gpu(args, file_to_run, availabe_yagis):
