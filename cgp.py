@@ -9,6 +9,7 @@ import math
 
 
 class Individual(object):
+    """Contains the gene which randomises the layers chosen for the DNN"""
 
     def __init__(self, net_info, init, arch_type):
         self.arch_type = arch_type
@@ -38,7 +39,8 @@ class Individual(object):
             else:
                 for i in range(self.net_info.max_in_num):
                     # self.gene[n][i + 1] = np.random.randint(0, n)
-                    self.gene[n][i + 1] = n-1
+                    # self.gene[n][i + 1] = n-1  # prev. used for ResNet/VGG calc
+                    self.gene[n][i + 1] = n
 
         self.check_active()
 
@@ -59,8 +61,8 @@ class Individual(object):
                 if self.gene[n][i+1] >= self.net_info.input_num:
                     # 
                     self.__check_course_to_out(
-                        self.gene[n][i+1])
-                        # self.gene[n][i+1] - self.net_info.input_num)
+                        # self.gene[n][i+1])  # prev used for ResNet/VGG calc
+                        self.gene[n][i+1] - self.net_info.input_num)
 
     def check_active(self):
         # clear
@@ -126,9 +128,9 @@ class Individual(object):
         return self.is_active.sum()
 
     def active_net_list(self):
-        if self.arch_type == 'resnet' or self.arch_type == 'densenet':
+        if self.arch_type == 'resnet':
             net_list = [["input", 0, 0]]
-        elif self.arch_type == 'vgg':
+        elif self.arch_type == 'vgg' or self.arch_type == 'densenet':
             net_list = [["input", 0]]
         active_cnt = np.arange(self.net_info.input_num +
                                self.net_info.node_num + self.net_info.out_num)

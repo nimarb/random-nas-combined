@@ -25,17 +25,24 @@ class CgpInfoConvSet(object):
                          'S_SepBlock_64_3',  'S_SepBlock_64_5',
                          'Max_Pool', 'Avg_Pool']
         # S_BLOCKTYPE_out-size_num-layer for DenseNet type
+        # S_BLOCKTYPE_growth-rate_num-layer-per-block for DenseNet type
         # func_type_densenet = ['S_SepBlock_16_3',  'S_SepBlock_16_5',
                             # 'S_SepBlock_32_3',  'S_SepBlock_32_5',
                             # 'S_SepBlock_64_3',  'S_SepBlock_64_5',
-        func_type_densenet = ['S_DenseBlock_16_6',  'S_DenseBlock_16_12',
-                            'S_DenseBlock_16_24',  'S_DenseBlock_16_16',
-                            'S_DenseBlock_32_6',  'S_DenseBlock_32_12',
-                            'S_DenseBlock_32_24',  'S_DenseBlock_32_16',
-                            'S_DenseBlock_64_6',  'S_DenseBlock_64_12',
-                            'S_DenseBlock_64_24',  'S_DenseBlock_64_16',
-                            'Sum','Sum',
-                            'Max_Pool', 'Avg_Pool']
+        func_type_densenet = ['S_DenseBlock_16_3_3',  'S_DenseBlock_16_6_3',
+                            'S_DenseBlock_16_3_5',  'S_DenseBlock_16_6_5',
+                            'S_DenseBlock_16_12_3',  'S_DenseBlock_16_9_3',
+                            'S_DenseBlock_16_12_5',  'S_DenseBlock_16_9_5',
+                            'S_DenseBlock_32_6_3',  'S_DenseBlock_32_12_3',
+                            'S_DenseBlock_32_6_5',  'S_DenseBlock_32_12_5',
+                            'S_DenseBlock_32_3_3',  'S_DenseBlock_32_9_3',
+                            'S_DenseBlock_32_3_5',  'S_DenseBlock_32_9_5',
+                            'S_DenseBlock_64_6_3',  'S_DenseBlock_64_12_3',
+                            'S_DenseBlock_64_6_5',  'S_DenseBlock_64_12_5',
+                            'S_DenseBlock_64_3_3',  'S_DenseBlock_64_9_3',
+                            'S_DenseBlock_64_3_5',  'S_DenseBlock_64_9_5']
+                            # 'Sum','Sum',
+                            # 'Max_Pool', 'Avg_Pool']
         
         func_in_num_resnet = [1, 1,
                               1, 1,
@@ -61,7 +68,9 @@ class CgpInfoConvSet(object):
                               1, 1,
                               1, 1,
                               1, 1,
-                              2, 2,
+                              1, 1,
+                              1, 1,
+                              1, 1,
                               1, 1]
 
         if arch_type == 'resnet':

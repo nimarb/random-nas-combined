@@ -1011,7 +1011,9 @@ class CGP2CNN(nn.Module):
             elif isinstance(layer, ResBlock):
                 outputs[nodeID] = layer(outputs[self.cgp[nodeID][1]],
                                         outputs[self.cgp[nodeID][1]])
-            elif isinstance(layer, DenseBlock):
+            elif isinstance(layer, DenseNet):
+                outputs[nodeID] = layer(outputs[self.cgp[nodeID][1]])
+            elif isinstance(layer, DenseBlockTorch):
                 outputs[nodeID] = layer(outputs[self.cgp[nodeID][1]])
             elif isinstance(layer, torch.nn.modules.pooling.MaxPool2d) \
                     or isinstance(layer, torch.nn.modules.pooling.AvgPool2d):
