@@ -50,6 +50,9 @@ RuntimeError: Given groups=32, weight of size 32 1 5 5, expected input[128, 16, 
 RuntimeError: running_mean should contain 16 elements not 64
 ```
 
+The actual error here is, that the output of The conv layer in the
+`_Transition` layer has to match the input of the next `norm1` layer.
+
 #### PyTorch implementations
 
 * [official pytorch implementation](https://github.com/pytorch/vision/blob/master/torchvision/models/densenet.py)

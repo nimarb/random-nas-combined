@@ -155,8 +155,11 @@ class CGP(object):
                  init=False):
         self.lam = lam
         self.max_pool_num = int(math.log2(img_size) - 2)
+        ####################
+        # TODO: why is there a list of pop instead of just one?
         self.pop = [Individual(net_info, init, arch_type)
                     for _ in range(1 + self.lam)]
+        ####################
         active_num = self.pop[0].count_active_node()
         _, pool_num = self.pop[0].check_pool()
         while active_num < self.pop[0].net_info.min_active_num or pool_num > self.max_pool_num:
