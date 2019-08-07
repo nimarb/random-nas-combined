@@ -163,8 +163,10 @@ class ResBlock(nn.Module):
 
 
 class _DenseLayer(nn.Sequential):
-    def __init__(self, num_input_features, growth_rate, bn_size, drop_rate, memory_efficient=False):
+    def __init__(self, num_input_features, growth_rate, bn_size, drop_rate,
+                 memory_efficient=False, kernel_size=3):
         super(_DenseLayer, self).__init__()
+        pad_size = (kernel_size - 1) // 2
         self.add_module('norm1', nn.BatchNorm2d(num_input_features)),
         self.add_module('relu1', nn.ReLU(inplace=True)),
         self.add_module('conv1', nn.Conv2d(num_input_features, bn_size *
@@ -173,7 +175,7 @@ class _DenseLayer(nn.Sequential):
         self.add_module('norm2', nn.BatchNorm2d(bn_size * growth_rate)),
         self.add_module('relu2', nn.ReLU(inplace=True)),
         self.add_module('conv2', nn.Conv2d(bn_size * growth_rate, growth_rate,
-                                           kernel_size=3, stride=1, padding=1,
+                                           kernel_size=kernel_size, stride=1, padding=pad_size,
                                            bias=False)),
         self.drop_rate = drop_rate
         self.memory_efficient = memory_efficient
@@ -194,6 +196,11 @@ class _DenseLayer(nn.Sequential):
 def _bn_function_factory(norm, relu, conv):
     def bn_function(*inputs):
         concated_features = torch.cat(inputs, 1)
+        ##########
+        # Debug
+        if concated_features.shape[1] != conv.in_channels:
+            print('Features vs conv size mismatch')
+        ##########
         bottleneck_output = conv(relu(norm(concated_features)))
         return bottleneck_output
 
@@ -201,7 +208,8 @@ def _bn_function_factory(norm, relu, conv):
 
 
 class _DenseBlock(nn.Module):
-    def __init__(self, num_layers, num_input_features, bn_size, growth_rate, drop_rate, memory_efficient=False):
+    def __init__(self, num_layers, num_input_features, bn_size, growth_rate,
+                 drop_rate, memory_efficient=False, kernel_size=3):
         super(_DenseBlock, self).__init__()
         for i in range(num_layers):
             layer = _DenseLayer(
@@ -210,6 +218,7 @@ class _DenseBlock(nn.Module):
                 bn_size=bn_size,
                 drop_rate=drop_rate,
                 memory_efficient=memory_efficient,
+                kernel_size=kernel_size
             )
             self.add_module('denselayer%d' % (i + 1), layer)
 
@@ -220,8 +229,11 @@ class _DenseBlock(nn.Module):
             features.append(new_features)
         return torch.cat(features, 1)
 
+
 class _Transition(nn.Sequential):
     def __init__(self, num_input_features, num_output_features):
+        """The num_output_features has to be the same as the number of input
+        features (growth_rate) as the next DenseBlock"""
         super(_Transition, self).__init__()
         self.add_module('norm', nn.BatchNorm2d(num_input_features))
         self.add_module('relu', nn.ReLU(inplace=True))
@@ -248,34 +260,56 @@ class DenseBlockTorch(nn.Module):
 
     # def __init__(self, growth_rate=32, block_config=(6, 12, 24, 16),
                 #  num_init_features=64, bn_size=4, drop_rate=0, num_classes=1000, memory_efficient=False):
-    def __init__(self, num_init_features, growth_rate, num_layers,
-                 bn_size=4, drop_rate=0, memory_efficient=True):
+    def __init__(self, num_init_features, growth_rate, num_layers, kernel_size=3,
+                 bn_size=4, drop_rate=0, memory_efficient=True, is_first=False,
+                 is_last=False, num_trans_out=None):
         # in, out, kernel, stride
 
         super(DenseBlockTorch, self).__init__()
-        self.features = nn.Sequential()
+
+        # First convolutions if applicable
+        self.is_first = is_first
+        if self.is_first:
+            self.features = nn.Sequential(OrderedDict([
+                ('conv0', nn.Conv2d(3, num_init_features, kernel_size=7, stride=2,
+                                    padding=3, bias=False)),
+                ('norm0', nn.BatchNorm2d(num_init_features)),
+                ('relu0', nn.ReLU(inplace=True)),
+                ('pool0', nn.MaxPool2d(kernel_size=3, stride=2, padding=1)),
+            ]))
+        else:
+            self.features = nn.Sequential()
+
         # Each denseblock
         num_features = num_init_features
         # for i, num_layers in enumerate(block_config):
         i = 0
-        block_config = []
         block = _DenseBlock(
             num_layers=num_layers,
             num_input_features=num_features,
             bn_size=bn_size,
             growth_rate=growth_rate,
             drop_rate=drop_rate,
-            memory_efficient=memory_efficient
+            memory_efficient=memory_efficient,
+            kernel_size=kernel_size
         )
         self.features.add_module('denseblock%d' % (i + 1), block)
         num_features = num_features + num_layers * growth_rate
-        if i != len(block_config) - 1:
+
+        self.is_last = is_last
+        if not self.is_last:
+        # if i != len(block_config) - 1:
+            if None == num_trans_out:
+                num_trans_out = growth_rate
             trans = _Transition(num_input_features=num_features,
-                                num_output_features=growth_rate)
+                                num_output_features=num_trans_out)
                                 # num_output_features=num_features // 2)
             self.features.add_module('transition%d' % (i + 1), trans)
-            # num_features = num_features // 2
-            num_features = growth_rate
+            num_features = num_features // 2
+            # num_features = growth_rate
+        else:
+            self.num_last_features = num_features
+            self.features.add_module('norm5', nn.BatchNorm2d(num_features))
 
         # Official init from torch repo.
         for m in self.modules():
@@ -289,8 +323,9 @@ class DenseBlockTorch(nn.Module):
 
     def forward(self, x):
         features = self.features(x)
-        # out = F.relu(features, inplace=True)
-        # out = F.adaptive_avg_pool2d(out, (1, 1))
+        # if self.is_last:
+            # out = F.relu(features, inplace=True)
+            # out = F.adaptive_avg_pool2d(out, (1, 1))
         return features
 
 
@@ -388,7 +423,7 @@ class DenseBlock(nn.Module):
     Concretely, this block is composed of L SubBlocks sharing a 
     common growth rate k (Figure 1 in the paper).
     """
-    def __init__(self, num_layers, in_channels, growth_rate, bottleneck, p):
+    def __init__(self, num_layers, in_channels, growth_rate, bottleneck, p=0):
         # in, out, kernel, stride
         # num_init_features, growth_rate, num_layers
         """
@@ -492,13 +527,17 @@ class DenseNet(nn.Module):
     - [1]: Huang et. al., https://arxiv.org/abs/1608.06993
     """
     def __init__(self, 
-                 num_blocks, 
-                 num_layers_total, 
-                 growth_rate, 
-                 num_classes, 
-                 bottleneck, 
-                 p, 
-                 theta):
+                 num_blocks=1, 
+                 growth_rate=32, 
+                 num_layers_total=1, 
+                 num_classes=10, 
+                 bottleneck=False, 
+                 p=0, 
+                 theta=0.5,
+                 is_first=False,
+                 is_last=False):
+        # in, out, kernel, stride
+        # num_init_features, growth_rate, num_layers
         """
         Initialize the DenseNet network. He. et al weight initialization 
         is used (scaling by sqrt(2/n) to make variance 2/n).
@@ -522,39 +561,44 @@ class DenseNet(nn.Module):
         super(DenseNet, self).__init__()
 
         # ensure L relationship talked above 
-        error_msg = "[!] Total number of layers must be 3*n + 4..."
-        assert (num_layers_total - 4) % 3 == 0, error_msg
+        # error_msg = "[!] Total number of layers must be 3*n + 4..."
+        # assert (num_layers_total - 4) % 3 == 0, error_msg
 
         # compute L, the number of layers in each dense block
         # if bottleneck, we need to adjust L by a factor of 2
-        num_layers_dense = int((num_layers_total - 4) / 3)
+        # num_layers_dense = int((num_layers_total - 4) / 3)
+        num_layers_dense = num_layers_total
         if bottleneck:
             num_layers_dense = int(num_layers_dense / 2)
+        self.is_last = is_last
+        self.is_first = is_first
 
         # ================================== #
         # initial convolutional layer
-        out_channels = 16
+        out_channels = growth_rate
         if bottleneck:
             out_channels = 2 * growth_rate
-        self.conv = nn.Conv2d(3,
-                              out_channels, 
-                              kernel_size=3,
-                              padding=1)
+        if self.is_first:
+            self.conv = nn.Conv2d(3,
+                                out_channels, 
+                                kernel_size=3,
+                                padding=1)
         # ================================== #
 
         # ================================== #
         # dense blocks and transition layers 
         blocks = []
-        for i in range(num_blocks - 1):
-            # dense block
-            dblock = DenseBlock(num_layers_dense, 
-                                out_channels, 
-                                growth_rate, 
-                                bottleneck, 
-                                p)
-            blocks.append(dblock)
+        # for i in range(num_blocks - 1):
+        # dense block
+        dblock = DenseBlock(num_layers_dense, 
+                            out_channels, 
+                            growth_rate, 
+                            bottleneck, 
+                            p)
+        blocks.append(dblock)
 
-            # transition block
+        # transition block
+        if not is_last:
             out_channels = dblock.out_channels
             trans = TransitionLayer(out_channels, theta, p)
             blocks.append(trans)
@@ -563,19 +607,20 @@ class DenseNet(nn.Module):
 
         # ================================== #
         # last dense block does not have transition layer
-        dblock = DenseBlock(num_layers_dense, 
-                            out_channels, 
-                            growth_rate, 
-                            bottleneck, 
-                            p)
-        blocks.append(dblock)
+        # dblock = DenseBlock(num_layers_dense, 
+                            # out_channels, 
+                            # growth_rate, 
+                            # bottleneck, 
+                            # p)
+        # blocks.append(dblock)
         self.block = nn.Sequential(*blocks)
         self.out_channels = dblock.out_channels
         # ================================== #
 
         # ================================== #
         # fully-connected layer
-        self.fc = nn.Linear(self.out_channels, num_classes)
+        if is_last:
+            self.fc = nn.Linear(self.out_channels, num_classes)
         # ================================== #
 
         # ================================== #
@@ -590,11 +635,15 @@ class DenseNet(nn.Module):
         """
         Run the forward pass of the DenseNet model.
         """
-        out = self.conv(x)
-        out = self.block(out)
+        if self.is_first:
+            out = self.conv(x)
+            out = self.block(out)
+        else:
+            out = self.block(x)
         out = F.avg_pool2d(out, 8)
         out = out.view(-1, self.out_channels)
-        out = self.fc(out)
+        if self.is_last:
+            out = self.fc(out)
         return out
 
 
@@ -791,6 +840,7 @@ class CGP2CNN(nn.Module):
         self.size = [None for _ in range(500)]
         self.channel_num[0] = in_channel
         self.size[0] = img_size
+        self.densenet_is_first = False
         # encoder
         i = 0
         if arch_type == 'resnet':
@@ -866,17 +916,16 @@ class CGP2CNN(nn.Module):
                 i += 1
 
         elif arch_type == 'densenet':
-             for name, in1, in2 in self.cgp:
+             for idx, (name, in1) in enumerate(self.cgp):
                 if name == 'input' in name:
-                    ##########
-                    # New: create input layer for DenseNet
-                    self.encode.append(DenseStart(out_size))
-                    ##########
+                    self.densenet_is_first = True
                     i += 1
                     continue
                 elif name == 'full':
-                    self.encode.append(nn.Linear(self.channel_num[in1],
+                    self.encode.append(nn.Linear(self.num_last_features,
                                                  n_class))
+                    # self.encode.append(nn.Linear(self.channel_num[in1],
+                                                #  n_class))
                 elif name == 'Max_Pool' or name == 'Avg_Pool':
                     self.channel_num[i] = self.channel_num[in1]
                     self.size[i] = int(self.size[in1] / 2)
@@ -886,33 +935,13 @@ class CGP2CNN(nn.Module):
                         self.encode.append(nn.MaxPool2d(2, 2))
                     else:
                         self.encode.append(nn.AvgPool2d(2, 2))
-                elif name == 'Concat':
-                    self.channel_num[i] = self.channel_num[in1] \
-                        + self.channel_num[in2]
-                    if self.size[in1] < self.size[in2]:
-                        small_in_id, large_in_id = (in1, in2)
-                    else:
-                        small_in_id, large_in_id = (in2, in1)
-                    self.size[i] = self.size[small_in_id]
-                    self.encode.append(Concat())
-                elif name == 'Sum':
-                    if self.channel_num[in1] < self.channel_num[in2]:
-                        small_in_id, large_in_id = (in1, in2)
-                    else:
-                        small_in_id, large_in_id = (in2, in1)
-                    self.channel_num[i] = self.channel_num[large_in_id]
-                    if self.size[in1] < self.size[in2]:
-                        small_in_id, large_in_id = (in1, in2)
-                    else:
-                        small_in_id, large_in_id = (in2, in1)
-                    self.size[i] = self.size[small_in_id]
-                    self.encode.append(Sum())
                 else:
                     key = name.split('_')
                     down = key[0]
                     func = key[1]
                     out_size = int(key[2])
                     kernel = int(key[3])
+                    real_kernel = int(key[4])
                     if down == 'S':
                         if func == 'SepBlock':
                             self.channel_num[i] = out_size
@@ -936,9 +965,26 @@ class CGP2CNN(nn.Module):
                             # kernel is the number of layers per block
                             # out_size is the growth rate
                             # in_size should be the prev output
-                            self.encode.append(DenseBlock(self.channel_num[in1],
-                                                          out_size, kernel))
+                            is_last = False
+                            if idx == len(self.cgp) - 2:
+                                is_last = True
+                                in_size_next = None
+                            else:
+                                name_next, _ = self.cgp[i+1]
+                                key_next = name_next.split('_')
+                                in_size_next = int(key_next[2])
+                                in_size_next = self.channel_num[in1+1]
+                            self.encode.append(DenseBlockTorch(self.channel_num[in1],
+                                                          out_size, kernel,
+                                                          kernel_size=real_kernel,
+                                                          is_first=self.densenet_is_first,
+                                                          is_last=is_last,
+                                                          num_trans_out=in_size_next))
+                            # self.encode.append(DenseNet(growth_rate=out_size, num_layers_total=kernel, is_first=self.densenet_is_first))
                                                         #   stride=1))
+                            if is_last:
+                                self.num_last_features = self.encode[-1].num_last_features
+                            self.densenet_is_first = False
                         else:
                             sys.exit("error at CGPCNN init")
                     else:
@@ -1003,7 +1049,8 @@ class CGP2CNN(nn.Module):
         outputs = self.outputs
         outputs[0] = x    # input image
         nodeID = 1
-        for layer in self.layer_module:
+        # print(self.layer_module)
+        for idx, layer in enumerate(self.layer_module):
             if isinstance(layer, SepConv):
                 outputs[nodeID] = layer(outputs[self.cgp[nodeID][1]])
             elif isinstance(layer, DilConv):
