@@ -11,7 +11,7 @@ def get_distortion_tests(test_dir=None):
     if not test_dir:
         test_dir = '/home/blume/datasets/CIFAR10-C/test/'
         if 'nbpc' in platform.node():
-            test_dir = '/home/nimar/datasets/CIFAR10-C/test/'
+            test_dir = '/home/nimar/progs/random-nas-combined/test-distortions/'
         elif 'yagi22' in platform.node() or 'yagi21' in platform.node():
             test_dir = '/home/suganuma/dataset/CIFAR10-C/test/'
     test_dists = [
@@ -74,7 +74,7 @@ class NoisySet(Dataset):
         self.test_path = test_path
         self.label_path = '/home/blume/datasets/CIFAR10-C/test/labels.npy'
         if 'nbpc' in platform.node():
-            self.label_path = '/home/nimar/datasets/CIFAR10-C/test/labels.npy'
+            self.label_path = '/home/nimar/progs/random-nas-combined/test-distortions/labels.npy'
         elif 'yagi22' in platform.node() or 'yagi21' in platform.node():
             self.label_path = '/home/suganuma/dataset/CIFAR10-C/test/labels.npy'
         # self.label_path = 'labels.npy'

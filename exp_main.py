@@ -137,7 +137,7 @@ if __name__ == '__main__':
         # Retraining the network
         test_dir = '/home/blume/datasets/CIFAR10-C/test/'
         if 'nbpc' in platform.node():
-            test_dir = '/home/nimar/datasets/CIFAR10-C/test/'
+            test_dir = '/home/nimar/progs/random-nas-combined/test-distortions/'
         elif 'yagi22' in platform.node() or 'yagi21' in platform.node():
             test_dir = '/home/suganuma/dataset/CIFAR10-C/test/'
         test_dists = [
