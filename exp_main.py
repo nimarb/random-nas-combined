@@ -66,7 +66,7 @@ if __name__ == '__main__':
                                      config['num_max_depth'])
             ###########
             # DEBUG ONLY
-            depth = 20
+            # depth = 5
             ###########
             config['num_depth'] = depth
             print(f'Depth = {depth}')
