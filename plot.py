@@ -63,6 +63,51 @@ def get_num_train_acc_arch_dict_old(logdir='save_dir', net_type='resnet',
     return arch_dict
 
 
+def get_nr_conv_layers(layer_name):
+
+    # RESNET START
+    layer_types = ['S_SepBlock_16_3',  'S_SepBlock_16_5',
+                        'S_SepBlock_32_3',  'S_SepBlock_32_5',
+                        'S_SepBlock_64_3',  'S_SepBlock_64_5',
+                        'S_ResBlock_16_3',  'S_ResBlock_16_5',
+                        'S_ResBlock_32_3',  'S_ResBlock_32_5',
+                        'S_ResBlock_64_3',  'S_ResBlock_64_5',
+                        'Sum','Sum',
+                        'Max_Pool', 'Avg_Pool',
+                        # VGG blocks dup of resnet
+                        # DENSE START
+                        'S_DenseBlock_16_3_3',  'S_DenseBlock_16_6_3',
+                        'S_DenseBlock_16_3_5',  'S_DenseBlock_16_6_5',
+                        'S_DenseBlock_16_12_3',  'S_DenseBlock_16_9_3',
+                        'S_DenseBlock_16_12_5',  'S_DenseBlock_16_9_5',
+                        'S_DenseBlock_32_6_3',  'S_DenseBlock_32_12_3',
+                        'S_DenseBlock_32_6_5',  'S_DenseBlock_32_12_5',
+                        'S_DenseBlock_32_3_3',  'S_DenseBlock_32_9_3',
+                        'S_DenseBlock_32_3_5',  'S_DenseBlock_32_9_5',
+                        'S_DenseBlock_64_6_3',  'S_DenseBlock_64_12_3',
+                        'S_DenseBlock_64_6_5',  'S_DenseBlock_64_12_5',
+                        'S_DenseBlock_64_3_3',  'S_DenseBlock_64_9_3',
+                        'S_DenseBlock_64_3_5',  'S_DenseBlock_64_9_5']
+
+    num_conv_layers = 0
+    if 'SepBlock' in layer_name:
+        num_conv_layers = 4
+    elif 'DilConv' in layer_name:
+        num_conv_layers = 2
+    elif 'DenseBlock' in layer_name:
+        feats = layer_name.split('_')
+        dense_layer_num = int(feats[3])
+        num_conv_layers = dense_layer_num * 2
+    elif 'ResBlock' in layer_name:
+        num_conv_layers = 2
+    elif 'ConvBlock' in layer_name:
+        num_conv_layers = 1
+    else:
+        num_conv_layers = 0
+
+    return num_conv_layers
+
+
 def get_arch_dict(logdir='save_dir', net_type='resnet', base_date='2019-07'):
     """ Looks like:
         arch_dict[0..num_trials]
@@ -103,6 +148,16 @@ def get_arch_dict(logdir='save_dir', net_type='resnet', base_date='2019-07'):
                 num_depth = line[idx+2:idx_depth_end]
                 arch_dict[arch_ctr]['num_depth'] = int(num_depth)
                 arch_dict[arch_ctr]['arch_str'] = arch_str
+                # count the actual number of conv layers
+                arch_list_raw = arch_str.split(',')
+                arch_list = [i for i in arch_list_raw if i[1] == "["]
+                num_conv_layers = 0
+                for entry in arch_list:
+                    num_conv_layers += get_nr_conv_layers(entry)
+                if 'densenet' == net_type:
+                    num_conv_layers += 1
+                arch_dict[arch_ctr]['num_conv_layers'] = num_conv_layers
+
                 arch_ctr += 1
 
 
@@ -246,7 +301,8 @@ if __name__ == "__main__":
     arch_dicts = []
     # args.num_trains = [500, 1000, 5000, 10000, 25000]
     accs = {}
-    arch_d = get_arch_dict(net_type='vgg')
+    network_type = 'densenet'
+    arch_d = get_arch_dict(net_type=network_type, base_date='2019-08')
     types = get_distortion_tests_name()
     for num_train in args.num_trains:
         for typ in types:
@@ -263,6 +319,6 @@ if __name__ == "__main__":
             # wrtr.writerow([i for i in range(len(d['accs']))])
             # wrtr.writerow(lay_num)
     # plot_influence('hi')
-    with open('vgg.json', 'w+') as fout:
+    with open(f'{network_type}.json', 'w+') as fout:
         json.dump(arch_d, fout, indent=2)
 
