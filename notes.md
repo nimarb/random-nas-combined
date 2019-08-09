@@ -15,6 +15,18 @@
 
 ## Features / implementations
 
+### Layer forgetfulness
+
+#### Method
+
+1. 1st or any conv layer (32 channels)
+2. global avg pooling
+3. create covariance matrix from 32 channels of size `32x32`
+4. perform SVD
+5. get the eigenvalues
+6. plot the eigenvalues
+7. analyse if the
+
 ### DenseNet blocks
 
 #### Similarities and differences DenseNet vs ResNet
