@@ -20,6 +20,30 @@ with open('vgg.json', 'r') as fin:
 with open('densenet.json', 'r') as fin:
     densenet_d = json.load(fin)
 
+test_dists = [
+    'normal',
+    'brightness',
+    'contrast',
+    'defocus_blur',
+    'elastic_transform',
+    'fog',
+    'frost',
+    'gaussian_blur',
+    'gaussian_noise',
+    'glass_blur',
+    'impulse_noise',
+    'jpeg_compression',
+    # 'labels',
+    'motion_blur',
+    'pixelate',
+    'saturate',
+    'shot_noise',
+    'snow',
+    'spatter',
+    'speckle_noise',
+    'zoom_blur'
+]
+
 num_trains = [500, 1000, 5000, 10000, 25000]
 
 def analyse_arch_dict(arch_dict, num_train=1000, distortion='normal',
@@ -53,6 +77,59 @@ def analyse_arch_dict(arch_dict, num_train=1000, distortion='normal',
     return plt, sns_plt
 
 
+def compare_dists(arch_dict, main_distortion='normal',
+                      plot_depths=False, show_graph=True, resnet_limit=False):
+    
+    depths = {}
+    accs = {}
+    avgs = []
+    cnt = 0
+    for dist in test_dists:
+        accs[dist] = []
+        depths[dist] = []
+        for num_train in num_trains:
+            avg = 0
+            for _, value in arch_dict.items():
+                if value['num_train'] == num_train:
+                    depths[dist].append(value['num_train'])
+                    accs[dist].append(value['accuracies'][dist])
+
+                if value['num_train'] == 500:
+                    avg += value['accuracies'][dist]
+                    cnt += 1
+        avgs.append(avg / cnt)
+    # sort_idx = np.flip(np.argsort(avgs))
+
+    # sorted_dists = np.array(test_dists)[sort_idx].tolist()
+    print(test_dists)
+    print(sorted_dists)
+
+
+    sns.set_palette("coolwarm",  20)
+    for dist in test_dists:
+        sns_plt = sns.lineplot(x=depths[dist], y=accs[dist])
+        # if dist == 'normal':
+            # sns_plt = sns.lineplot(x=depths[dist], y=accs[dist], color='red')
+            # colour
+        # else:
+            # sns_plt = sns.lineplot(x=depths[dist], y=accs[dist], sns.color_palette("coolwarm",  20))
+
+            # scale
+    
+    # Shrink current axis by 20%
+    box = sns_plt.get_position()
+    sns_plt.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+
+    title = f'VGG: Test Acc on Distorted CIFAR10 Images With Small Training Datasets'
+    sns_plt.legend(title='Distortions', labels=test_dists, loc='center left', bbox_to_anchor=(1.18, 0.5))
+    sns_plt.set(xlabel='Number of Training Data Images', ylabel='Test/Acc', title=title)
+    print(title.replace(' ', '-').lower())
+    save_graph(plt, title.replace(' ', '-').lower())
+    if show_graph:
+        plt.show()
+    return plt, sns_plt
+
+
 def save_graph(sns_plt, path):
     # figure = sns_plt.get_figure()
     figure = sns_plt
@@ -63,7 +140,10 @@ def save_graph(sns_plt, path):
 #%%
 dist = 'normal'
 num_train = 1000
-    
+
+
+#%%
+compare_dists(vgg_d)
 
 #%%
 ## ResNet Analytics
