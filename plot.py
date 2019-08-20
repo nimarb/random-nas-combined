@@ -302,7 +302,7 @@ if __name__ == "__main__":
     # args.num_trains = [500, 1000, 5000, 10000, 25000]
     accs = {}
     network_type = 'densenet'
-    arch_d = get_arch_dict(net_type=network_type, base_date='2019-08')
+    arch_d = get_arch_dict(net_type=network_type, base_date='2019')
     types = get_distortion_tests_name()
     for num_train in args.num_trains:
         for typ in types:
