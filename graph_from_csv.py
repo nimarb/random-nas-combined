@@ -80,51 +80,50 @@ def analyse_arch_dict(arch_dict, num_train=1000, distortion='normal',
 def compare_dists(arch_dict, main_distortion='normal',
                       plot_depths=False, show_graph=True, resnet_limit=False):
     
-    depths = {}
-    accs = {}
-    avgs = []
-    cnt = 0
+    # depths = {}  # contains one num_train entry for each trail
+    # accs = {}  # contains one acc entry for each trail per dist
+    accs2 = {}  # contains the avg acc for each unique num_train entry per dist
     for dist in test_dists:
-        accs[dist] = []
-        depths[dist] = []
+        # accs[dist] = []
+        accs2[dist] = []
+        # depths[dist] = []
         for num_train in num_trains:
-            avg = 0
+            acc_cnt = 0
+            acc_total_current_num_train = 0
             for _, value in arch_dict.items():
                 if value['num_train'] == num_train:
-                    depths[dist].append(value['num_train'])
-                    accs[dist].append(value['accuracies'][dist])
+                    # depths[dist].append(value['num_train'])
+                    # accs[dist].append(value['accuracies'][dist])
 
-                if value['num_train'] == 500:
-                    avg += value['accuracies'][dist]
-                    cnt += 1
-        avgs.append(avg / cnt)
-    # sort_idx = np.flip(np.argsort(avgs))
+                    acc_total_current_num_train += value['accuracies'][dist]
+                    acc_cnt += 1
+            accs2[dist].append(acc_total_current_num_train / acc_cnt)
 
-    # sorted_dists = np.array(test_dists)[sort_idx].tolist()
-    print(test_dists)
-    print(sorted_dists)
+    accs_at_25k = [] 
+    for _, value in accs2.items():
+        accs_at_25k.append(value[-1])
+    sort_idx = np.flip(np.argsort(accs_at_25k))
+    sorted_dists = np.array(test_dists)[sort_idx].tolist()
 
-
-    sns.set_palette("coolwarm",  20)
-    for dist in test_dists:
-        sns_plt = sns.lineplot(x=depths[dist], y=accs[dist])
-        # if dist == 'normal':
+    palette = sns.color_palette('RdBu', n_colors=20)
+    for dist,col in zip(sorted_dists, palette):
+        if dist == 'normal':
             # sns_plt = sns.lineplot(x=depths[dist], y=accs[dist], color='red')
-            # colour
-        # else:
-            # sns_plt = sns.lineplot(x=depths[dist], y=accs[dist], sns.color_palette("coolwarm",  20))
+            sns_plt = sns.lineplot(x=num_trains, y=accs2[dist], color='red')
+        else:
+            # sns_plt = sns.lineplot(x=depths[dist], y=accs[dist], color=col)
+            sns_plt = sns.lineplot(x=num_trains, y=accs2[dist], color=col)
 
-            # scale
-    
     # Shrink current axis by 20%
     box = sns_plt.get_position()
-    sns_plt.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+    sns_plt.set_position([box.x0, box.y0, box.width * 0.85, box.height])
 
-    title = f'VGG: Test Acc on Distorted CIFAR10 Images With Small Training Datasets'
-    sns_plt.legend(title='Distortions', labels=test_dists, loc='center left', bbox_to_anchor=(1.18, 0.5))
+    title = f'DenseNet: Test Acc on Distorted CIFAR10 Images With Small Training Datasets'
+    # sns_plt.legend(title='Distortions', labels=test_dists, loc='center left', bbox_to_anchor=(1.18, 0.5))
+    sns_plt.legend(title='Distortions', labels=sorted_dists, loc='center left', bbox_to_anchor=(1.18, 0.5))
     sns_plt.set(xlabel='Number of Training Data Images', ylabel='Test/Acc', title=title)
     print(title.replace(' ', '-').lower())
-    save_graph(plt, title.replace(' ', '-').lower())
+    # save_graph(plt, title.replace(' ', '-').lower())
     if show_graph:
         plt.show()
     return plt, sns_plt
@@ -143,7 +142,7 @@ num_train = 1000
 
 
 #%%
-compare_dists(vgg_d)
+compare_dists(densenet_d)
 
 #%%
 ## ResNet Analytics
@@ -162,7 +161,8 @@ for num_train in num_trains:
 #%%
 ## DenseNet Analyics
 print('DenseNet analytics')
-analyse_arch_dict(densenet_d, num_train=num_train, distortion=dist)
+for num_train in num_trains:
+    analyse_arch_dict(densenet_d, num_train=num_train, distortion=dist, show_graph=False)
 
 
 #%%
