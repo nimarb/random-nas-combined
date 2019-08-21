@@ -77,7 +77,7 @@ def analyse_arch_dict(arch_dict, num_train=1000, distortion='normal',
     return plt, sns_plt
 
 
-def get_acc_dict(arch_dict):
+def get_acc_dict(arch_dict, relative=False):
     # depths = {}  # contains one num_train entry for each trail
     # accs = {}  # contains one acc entry for each trail per dist
     accs2 = {}  # contains the avg acc for each unique num_train entry per dist
@@ -96,13 +96,21 @@ def get_acc_dict(arch_dict):
                     acc_total_current_num_train += value['accuracies'][dist]
                     acc_cnt += 1
             accs2[dist].append(acc_total_current_num_train / acc_cnt)
+
+    if relative:
+        top_acc = accs2['normal'][-1]
+        rel_accs = {}
+        for dist, value in accs2.items():
+            rel_accs[dist] = [i / top_acc for i in value]
+        return rel_accs
     return accs2
 
 
 def compare_dists(arch_dict=None, acc_dict=None, main_distortion='normal',
-                      plot_depths=False, show_graph=True, resnet_limit=False):
+                      plot_depths=False, show_graph=True, resnet_limit=False,
+                      relative=False):
     if not acc_dict:
-        accs2 = get_acc_dict(arch_dict)
+        accs2 = get_acc_dict(arch_dict, relative=relative)
     else:
         accs2 = acc_dict
 
@@ -127,13 +135,13 @@ def compare_dists(arch_dict=None, acc_dict=None, main_distortion='normal',
 
     # Shrink current axis by 20%
     box = sns_plt.get_position()
-    sns_plt.set_position([box.x0, box.y0, box.width * 0.85, box.height])
+    sns_plt.set_position([box.x0, box.y0, box.width * 0.92, box.height])
 
-    title = f'DenseNet: Test Acc on Distorted CIFAR10 Images With Small Training Datasets'
+    title = f'VGG: Relative Test Acc on Distorted CIFAR10 Images With Small Training Datasets'
     legend_labels = sorted_dists + ['avg distortion acc']
     # sns_plt.legend(title='Distortions', labels=TEST_DISTS, loc='center left', bbox_to_anchor=(1.18, 0.5))
     sns_plt.legend(title='Distortions', labels=legend_labels, loc='center left', bbox_to_anchor=(1.18, 0.5))
-    sns_plt.set(xlabel='Number of Training Data Images', ylabel='Test/Acc', title=title)
+    sns_plt.set(xlabel='Number of Training Data Images', ylabel='Relative Test Accuracy', title=title)
     print(title.replace(' ', '-').lower())
     # save_graph(plt, title.replace(' ', '-').lower())
     if show_graph:
@@ -166,7 +174,7 @@ num_train = 1000
 
 
 #%%
-compare_dists(resnet_d)
+compare_dists(vgg_d, relative=True)
 
 #%%
 ## ResNet Analytics
