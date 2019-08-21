@@ -77,7 +77,7 @@ def analyse_arch_dict(arch_dict, num_train=1000, distortion='normal',
     return plt, sns_plt
 
 
-def get_acc_dict(arch_dict, relative=False):
+def get_acc_dict(arch_dict, relative=False, tot_relative=True):
     # depths = {}  # contains one num_train entry for each trail
     # accs = {}  # contains one acc entry for each trail per dist
     accs2 = {}  # contains the avg acc for each unique num_train entry per dist
@@ -98,11 +98,18 @@ def get_acc_dict(arch_dict, relative=False):
             accs2[dist].append(acc_total_current_num_train / acc_cnt)
 
     if relative:
-        top_acc = accs2['normal'][-1]
-        rel_accs = {}
-        for dist, value in accs2.items():
-            rel_accs[dist] = [i / top_acc for i in value]
-        return rel_accs
+        if tot_relative:
+            top_accs = accs2['normal']
+            rel_accs = {}
+            for dist, value in accs2.items():
+                rel_accs[dist] = [i / top_accs[idx] for idx,i in enumerate(value)]
+            return rel_accs
+        else:
+            top_acc = accs2['normal'][-1]
+            rel_accs = {}
+            for dist, value in accs2.items():
+                rel_accs[dist] = [i / top_acc for i in value]
+            return rel_accs
     return accs2
 
 
@@ -137,7 +144,7 @@ def compare_dists(arch_dict=None, acc_dict=None, main_distortion='normal',
     box = sns_plt.get_position()
     sns_plt.set_position([box.x0, box.y0, box.width * 0.92, box.height])
 
-    title = f'VGG: Relative Test Acc on Distorted CIFAR10 Images With Small Training Datasets'
+    title = f'DenseNet: Relative Test Acc on Distorted CIFAR10 Images With Small Training Datasets'
     legend_labels = sorted_dists + ['avg distortion acc']
     # sns_plt.legend(title='Distortions', labels=TEST_DISTS, loc='center left', bbox_to_anchor=(1.18, 0.5))
     sns_plt.legend(title='Distortions', labels=legend_labels, loc='center left', bbox_to_anchor=(1.18, 0.5))
@@ -174,7 +181,7 @@ num_train = 1000
 
 
 #%%
-compare_dists(vgg_d, relative=True)
+compare_dists(densenet_d, relative=True)
 
 #%%
 ## ResNet Analytics
