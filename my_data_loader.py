@@ -46,16 +46,21 @@ def get_train_valid_loader(data_dir, batch_size, augment, random_seed, valid_siz
     valid_dataset = datasets.CIFAR10(
         root=data_dir, train=True, download=True, transform=valid_transform)
 
-    print('./sample_indices/training_sample_list_%d.npy' % (data_num))
-    print('./sample_indices/valid_sample_list_%d.npy' % (data_num))
-    balanced_train_indices = np.load(
-        './sample_indices/training_sample_list_%d.npy' % (data_num))
-    balanced_train_sampler = SubsetRandomSampler(
-        balanced_train_indices.tolist())
-    balanced_valid_indices = np.load(
-        './sample_indices/valid_sample_list_%d.npy' % (data_num))
-    balanced_valid_sampler = SubsetRandomSampler(
-        balanced_valid_indices.tolist())
+    # To be able to train on the full CIFAR10 dataset
+    if 50000 == data_num:
+        balanced_train_sampler = None
+        balanced_valid_sampler = None
+    else:
+        print('./sample_indices/training_sample_list_%d.npy' % (data_num))
+        print('./sample_indices/valid_sample_list_%d.npy' % (data_num))
+        balanced_train_indices = np.load(
+            './sample_indices/training_sample_list_%d.npy' % (data_num))
+        balanced_train_sampler = SubsetRandomSampler(
+            balanced_train_indices.tolist())
+        balanced_valid_indices = np.load(
+            './sample_indices/valid_sample_list_%d.npy' % (data_num))
+        balanced_valid_sampler = SubsetRandomSampler(
+            balanced_valid_indices.tolist())
 
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
