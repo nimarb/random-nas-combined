@@ -29,6 +29,11 @@
 7. plot the eigenvalues
 8. analyse if the
 
+#### Implementation
+
+this can probably be realised with `forward_hooks` instead of altering the
+PyTorch model itself.
+
 ### DenseNet blocks
 
 #### Similarities and differences DenseNet vs ResNet
