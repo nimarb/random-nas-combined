@@ -42,7 +42,6 @@ and you must have a valid SSH key without password promt for the servers
 In this case, the script checks for the number of available GPUs on each server
 and then executes `--archs_per_task` number of trail runs on each available GPU.
 
-
 ## Interpreting Results
 
 The log files are stored in `./log/*` but don't contain any information used for
@@ -54,7 +53,22 @@ process. `config.json` contains the configuration used for that run.
 `log-active.txt` contains the layer structure used and the number of total layers
 per layer structure. The number of layers is incorrect in `config.json`.
 
-To consolidate the results of one type of run when wanting to plot a graph for
-all ResNet runs for example, there is a script.
 
-TODO: RENAME json creation script.
+### Consolidating Results
+
+To consolidate the results of one type of run when wanting to plot a graph for
+all ResNet runs for example, there is a script in `create_consolidated_results_json.py`.
+To get a consolidated results file for all ResNet runs for example, run:
+
+```bash
+$ python3 create_consolidated_results_json.py --arch_type resnet
+Saved the consolidated results json to vgg.json
+```
+
+### Plotting Results
+
+To plot the results contained in the consolidated results file, the scripts in
+`graph_from_csv.py` can be used. The file is designed to be run as jupyter notebook.
+However, it was only tested as being run as a notebook within VSCode with the
+MS Python extension.  
+In the file, first various functions are defined which can then be run as desired.
