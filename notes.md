@@ -15,6 +15,11 @@
 
 ## Features / implementations
 
+### Model Saving / Loading
+
+* **Important**: currently only the last model of a training process is being
+saved.
+
 ### Layer forgetfulness
 
 #### Method

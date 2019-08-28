@@ -43,8 +43,11 @@ class CNN_train():
                 self.n_class = 10
                 self.channel = 3
                 if self.validation:
+                    # TODO: are we actually testing on the validation set here!?
                     self.dataloader, self.test_dataloader = get_train_valid_loader(
-                        data_dir='./', batch_size=self.batchsize, augment=True, random_seed=2018, num_workers=1, pin_memory=True, data_num=self.data_num)
+                        data_dir='./', batch_size=self.batchsize, augment=True,
+                        random_seed=2018, num_workers=1, pin_memory=True,
+                        data_num=self.data_num)
                 else:
                     train_dataset = dset.CIFAR10(root='./', train=True, download=True,
                                                  transform=transforms.Compose([
@@ -64,15 +67,19 @@ class CNN_train():
                                                         (0.49139968, 0.48215827, 0.44653124), (0.24703233, 0.24348505, 0.26158768)),
                                                 ]))
                     self.dataloader = torch.utils.data.DataLoader(
-                        train_dataset, batch_size=self.batchsize, shuffle=True, num_workers=int(4), drop_last=True)
+                        train_dataset, batch_size=self.batchsize, shuffle=True,
+                        num_workers=int(4), drop_last=True)
                     self.test_dataloader = torch.utils.data.DataLoader(
-                        test_dataset, batch_size=self.batchsize, shuffle=True, num_workers=int(4), drop_last=True)
+                        test_dataset, batch_size=self.batchsize, shuffle=True,
+                        num_workers=int(4), drop_last=True)
             elif dataset_name == 'tinyimagenet':
                 self.n_class = 200
                 self.channel = 3
                 if self.validation:
                     self.dataloader, self.test_dataloader = get_train_valid_loader_tinyimagenet(
-                        data_dir='/home/suganuma/dataset/tiny-imagenet-200/train', batch_size=self.batchsize, augment=True, random_seed=2018, num_workers=4, pin_memory=False, data_num=self.data_num)
+                        data_dir='/home/suganuma/dataset/tiny-imagenet-200/train',
+                        batch_size=self.batchsize, augment=True, random_seed=2018,
+                        num_workers=4, pin_memory=False, data_num=self.data_num)
                 else:
                     if self.mode == "full":
                         transform_train = transforms.Compose([
@@ -84,21 +91,28 @@ class CNN_train():
                             Cutout(16), ])
 
                         trainset = torchvision.datasets.ImageFolder(
-                            root='/home/suganuma/dataset/tiny-imagenet-200/train', transform=transform_train)
+                            root='/home/suganuma/dataset/tiny-imagenet-200/train',
+                            transform=transform_train)
                         self.dataloader = torch.utils.data.DataLoader(
-                            trainset, batch_size=self.batchsize, shuffle=True, num_workers=8, drop_last=True)
+                            trainset, batch_size=self.batchsize, shuffle=True,
+                            num_workers=8, drop_last=True)
                     else:
                         self.dataloader, _ = get_train_valid_loader_tinyimagenet(
-                            data_dir='/home/suganuma/dataset/tiny-imagenet-200/train', batch_size=self.batchsize, augment=True, random_seed=2018, num_workers=4, pin_memory=False, data_num=self.data_num)
+                            data_dir='/home/suganuma/dataset/tiny-imagenet-200/train',
+                            batch_size=self.batchsize, augment=True,
+                            random_seed=2018, num_workers=4, pin_memory=False,
+                            data_num=self.data_num)
                         print("train  num", self.data_num)
 
                     transform_test = transforms.Compose([
                         transforms.ToTensor(),
                         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)), ])
                     testset = torchvision.datasets.ImageFolder(
-                        root='/home/suganuma/dataset/tiny-imagenet-200/val', transform=transform_test)
+                        root='/home/suganuma/dataset/tiny-imagenet-200/val',
+                        transform=transform_test)
                     self.test_dataloader = torch.utils.data.DataLoader(
-                        testset, batch_size=self.batchsize, shuffle=False, num_workers=4, drop_last=True)
+                        testset, batch_size=self.batchsize, shuffle=False,
+                        num_workers=4, drop_last=True)
         else:
             print('\tInvalid input dataset name at CNN_train()')
             exit(1)
@@ -197,7 +211,7 @@ class CNN_train():
             acc = self.test(model, criterion, gpuID)
             accs[test_names[idx]] = acc
 
-        self.test_dataloader = dloader
+        self.test_dataloader = dloader  # reassign to the original test set
         return accs['normal'], accs
 
     # For validation/test
