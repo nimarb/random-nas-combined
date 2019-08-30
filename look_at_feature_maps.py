@@ -11,11 +11,10 @@ from cnn_model import CGP2CNN
 from cgp_config import CgpInfoConvSet
 from cgp import CGP
 from my_data_loader import get_train_valid_loader
+from datastuff import get_test_loader
 
 #%%
 
-ex_path = "densenet-2019-08-08-20-16-57.800772-1000-38-id0"
-ex_path = "vgg-2019-07-24-18-24-07.952185-10000-20-id2"
 
 def get_model_files_complete(model_folder_name, save_dir='save_dir'):
     folder_path = Path(f'{save_dir}/{model_folder_name}')
@@ -119,13 +118,24 @@ def load_model(model_folder_pth, num_layer_eig, layer_eig_spacing):
     model.load_state_dict(model_state)
     model.eval()
     return model
-    
 
 
-def get_dataloaders():
+def get_dataloaders(num_train=5000):
     return get_train_valid_loader(
         data_dir='./', batch_size=2, augment=True,
         random_seed=2018, num_workers=0, pin_memory=True,
+        data_num=num_train)
+
+
+def get_folder_names(net_type='vgg', num_train=500, save_dir='save_dir'):
+    if isinstance(save_dir, str):
+        save_dir = Path(save_dir)
+
+    base_str = f'{net_type}-*-{num_train}-*'
+    folder_names = sorted(save_dir.glob(base_str))
+
+    return [(i.stem + i.suffix) for i in folder_names], folder_names
+
 
 def split_eig_vectors(eig, num_eig_vec):
     eig_vec_dict = {}
@@ -146,9 +156,11 @@ def split_eig_vectors(eig, num_eig_vec):
 # ex_path = "densenet-2019-08-08-20-16-57.800772-1000-38-id0"
 # ex_path = 'resnet-2019-07-26-10-54-57.660333-25000-20-id2'
 ex_path = "vgg-2019-07-24-18-24-07.952185-10000-20-id2"
+num_train = 5000
 net_type = 'vgg'
 num_layer_eig = 3
 layer_eig_spacing = 2
+f_names, _ = get_folder_names(net_type, num_train)
 
 #%%
 
@@ -156,6 +168,7 @@ avg_eigenvalues = []
 # for ex_path in f_names:
 model = load_model(ex_path, num_layer_eig, layer_eig_spacing)
 train_dl, valid_dl = get_dataloaders()
+test_dl = get_test_loader('test-distortions/impulse_noise.npy', batch_size=16, num_test=5000)
 ctr = 0
 # test_dl = torch.utils.data.DataLoader(
     # test_dataset, batch_size=128, shuffle=True, num_workers=int(4), drop_last=True)
@@ -171,13 +184,13 @@ eig_vec_dict = split_eig_vectors(eig_vecs, num_layer_eig)
 
 mean_real_dict = {}
 for idx, eigenvalues in eig_vec_dict.items():
-# covariance_matrices = model.covariance_matrices
-real_stack = torch.stack([i[0] for i in eigenvalues], dim=0)
-# complex_stack = torch.stack([i[1] for i in eigenvalues], dim=1)
+    # covariance_matrices = model.covariance_matrices
+    real_stack = torch.stack([i[0] for i in eigenvalues], dim=0)
+    # complex_stack = torch.stack([i[1] for i in eigenvalues], dim=1)
     mean_real_dict[idx] = torch.mean(real_stack, dim=0)
-# mean_complex = torch.mean(complex_stack, dim=0)
+    # mean_complex = torch.mean(complex_stack, dim=0)
     print(f'mean: {mean_real_dict[idx]}')
-# print(f'mean_complex: {mean_complex}')
+    # print(f'mean_complex: {mean_complex}')
     # avg_eigenvalues.append(mean_real)
 
 #%%

@@ -1,6 +1,7 @@
 import torchvision.transforms as transforms
 from torch.utils.data import Dataset, DataLoader
 import torchvision.datasets as dset
+from torch.utils.data.sampler import SubsetRandomSampler
 import numpy as np
 import platform
 
@@ -96,10 +97,22 @@ class NoisySet(Dataset):
         return sample, self.targets[idx]
 
 
-def get_test_loader(test_path):
-    dataloader = DataLoader(NoisySet(test_path), batch_size=128, shuffle=True,
-                            # dataloader = DataLoader(dset.CIFAR10('./'), batch_size=128, shuffle=True,
-                            num_workers=1, drop_last=True, pin_memory=True)
+def get_test_loader(test_path, batch_size=128, num_test=50000):
+    # To be able to test on the full CIFAR10 dataset
+    if 50000 == num_test:
+        balanced_valid_sampler = None
+        shuffle = True
+        balanced_valid_sampler = None
+    else:
+        print('./sample_indices/valid_sample_list_%d.npy' % (num_test))
+        balanced_valid_indices = np.load(
+            './sample_indices/valid_sample_list_%d.npy' % (num_test))
+        balanced_valid_sampler = SubsetRandomSampler(
+            balanced_valid_indices.tolist())
+        shuffle = False
+    dataloader = DataLoader(NoisySet(test_path), batch_size=batch_size,
+                            shuffle=shuffle, num_workers=1, drop_last=True,
+                            pin_memory=True, sampler=balanced_valid_sampler)
     return dataloader
 
 
