@@ -88,7 +88,7 @@ def get_model_files(model_folder_name, save_dir='save_dir'):
     return model_state, config_dict, cgp_genes
 
 
-def load_model(model_folder_pth):
+def load_model(model_folder_pth, num_layer_eig, layer_eig_spacing):
     gpuID = 0
     model_state, config, gene = get_model_files(model_folder_pth)
 
@@ -107,7 +107,9 @@ def load_model(model_folder_pth):
 
     torch.backends.cudnn.benchmark = True
     model = CGP2CNN(gene, in_channel=3, n_class=10, img_size=config['img_size'],
-                    arch_type=config['arch_type'])
+                    arch_type=config['arch_type'], register_hook=True,
+                    num_layer_eig=num_layer_eig,
+                    layer_eig_spacing=layer_eig_spacing)
     # criterion = nn.CrossEntropyLoss()
     # criterion = criterion.cuda(gpuID)
     # optimizer = torch.optim.Adam(
@@ -124,13 +126,35 @@ def get_dataloaders():
     return get_train_valid_loader(
         data_dir='./', batch_size=2, augment=True,
         random_seed=2018, num_workers=0, pin_memory=True,
-        data_num=500)
+
+def split_eig_vectors(eig, num_eig_vec):
+    eig_vec_dict = {}
+    ctr = 0
+    for idx, vec in enumerate(eig):
+        if ctr % num_eig_vec == 0:
+            ctr = 0
+        if idx < num_eig_vec:
+            eig_vec_dict[ctr] = []
+        eig_vec_dict[ctr].append(vec)
+        ctr += 1
+
+    return eig_vec_dict
 
 
 
 #%%
-# a, b, c = get_model_files(ex_path)
-model = load_model(ex_path)
+# ex_path = "densenet-2019-08-08-20-16-57.800772-1000-38-id0"
+# ex_path = 'resnet-2019-07-26-10-54-57.660333-25000-20-id2'
+ex_path = "vgg-2019-07-24-18-24-07.952185-10000-20-id2"
+net_type = 'vgg'
+num_layer_eig = 3
+layer_eig_spacing = 2
+
+#%%
+
+avg_eigenvalues = []
+# for ex_path in f_names:
+model = load_model(ex_path, num_layer_eig, layer_eig_spacing)
 train_dl, valid_dl = get_dataloaders()
 ctr = 0
 # test_dl = torch.utils.data.DataLoader(
@@ -138,26 +162,22 @@ ctr = 0
 
 for _, (data, target) in enumerate(valid_dl):
     __ = model(data)
-    print(f'iter: {ctr}')
+    # print(f'iter: {ctr}')
     ctr += 1
-    print(f'len: {len(model.eigenvalues)}')
+    # print(f'len: {len(model.eigenvalues)}')
 
-eigenvalues = model.eigenvalues
+eig_vecs = model.eigenvalues
+eig_vec_dict = split_eig_vectors(eig_vecs, num_layer_eig)
+
+mean_real_dict = {}
+for idx, eigenvalues in eig_vec_dict.items():
 # covariance_matrices = model.covariance_matrices
-
-
-#%%
-
-len(eigenvalues)
-
-#%%
-
 real_stack = torch.stack([i[0] for i in eigenvalues], dim=0)
 # complex_stack = torch.stack([i[1] for i in eigenvalues], dim=1)
-mean_real = torch.mean(real_stack, dim=0)
+    mean_real_dict[idx] = torch.mean(real_stack, dim=0)
 # mean_complex = torch.mean(complex_stack, dim=0)
-print(f'mean: {mean_real}')
+    print(f'mean: {mean_real_dict[idx]}')
 # print(f'mean_complex: {mean_complex}')
-
+    # avg_eigenvalues.append(mean_real)
 
 #%%

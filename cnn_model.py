@@ -462,7 +462,7 @@ class DilConv(nn.Module):
 
 class CGP2CNN(nn.Module):
     def __init__(self, cgp, in_channel, n_class, img_size, arch_type='resnet',
-                 register_hook=False):
+                 register_hook=True, num_layer_eig=3, layer_eig_spacing=1):
         super(CGP2CNN, self).__init__()
         self.cgp = cgp
         self.arch = OrderedDict()
@@ -480,6 +480,8 @@ class CGP2CNN(nn.Module):
         i = 0
         if arch_type == 'resnet':
             for name, in1, in2 in self.cgp:
+            # for name, in1, in self.cgp:
+                # in2 = in1
                 if name == 'input' in name:
                     i += 1
                     continue
@@ -677,30 +679,58 @@ class CGP2CNN(nn.Module):
 
         self.layer_module = nn.ModuleList(self.encode)
         self.outputs = [None for _ in range(len(self.cgp))]
-        
+
+        layers_to_reg = []
+
         if self.register_hook:
-            if arch_type == 'vgg':
+            if arch_type == 'vgg' or arch_type == 'resnet':
                 for name, layer in self.layer_module._modules.items():
                     if isinstance(layer, SepConv) or \
                         isinstance(layer, DilConv):
                         for actual_layer in layer.op:
                             if isinstance(actual_layer, nn.Conv2d):
-                                layer_to_reg = actual_layer
+                                layers_to_reg.append(actual_layer)
 
             elif arch_type == 'densenet':
-                pass
-            
-            elif arch_type == 'resnet':
                 for name, layer in self.layer_module._modules.items():
                     if isinstance(layer, SepConv) or isinstance(layer, DilConv) or \
                     isinstance(layer,ResBlock) or isinstance(layer,DenseBlockTorch):
-                        for _, actual_layer in layer._modules['op']._modules.items():
+                        for actual_layer in layer.features:
                             if isinstance(actual_layer, nn.Conv2d):
-                                layer_to_reg = actual_layer
-            layer_to_reg.register_forward_hook(self.hook_fn)
+                                layers_to_reg.append(actual_layer)
+                            if isinstance(actual_layer, _DenseBlock):
+                                for _, dl in actual_layer._modules.items():
+                                    if isinstance(dl, nn.Conv2d):
+                                        layers_to_reg.append(dl)
+                            if isinstance(actual_layer, _Transition):
+                                for _, dl in actual_layer._modules.items():
+                                    if isinstance(dl, nn.Conv2d):
+                                        layers_to_reg.append(dl)
+                                    
 
-    def hook_fn(self, m, input, output):
-        # self.layer_channels[m] = output  # here not needed b/c not used again
+            # elif arch_type == 'resnet':
+            #     for name, layer in self.layer_module._modules.items():
+            #         if isinstance(layer, SepConv) or isinstance(layer, DilConv) or \
+            #         isinstance(layer,ResBlock) or isinstance(layer,DenseBlockTorch):
+            #             for _, actual_layer in layer._modules['op']._modules.items():
+            #                 if isinstance(actual_layer, nn.Conv2d):
+            #                     layer_to_reg = actual_layer
+
+            actual_layers_to_reg = []
+            for idx, layer in enumerate(reversed(layers_to_reg)):
+                if 0 == idx:
+                    actual_layers_to_reg.append(layer)
+                elif idx % layer_eig_spacing == 0:
+                    actual_layers_to_reg.append(layer)
+                if num_layer_eig <= len(actual_layers_to_reg):
+                    break
+
+            for layer in actual_layers_to_reg:
+                layer.register_forward_hook(self.hook_fn)
+
+
+    def hook_fn(self, module, input, output):
+        # self.layer_channels[module] = output  # here not needed b/c not used again
         # pool = nn.AdaptiveAvgPool2d(10)
         pool = nn.AvgPool2d(output.size()[2:])
         analyse = pool(output)
@@ -708,10 +738,8 @@ class CGP2CNN(nn.Module):
         if 0 < len(analyse):
             analyse = torch.cat((analyse[0], analyse[1]), dim=1)
         covm = cov(analyse)
-        # self.covariance_matrices.append(covm)
+        self.covariance_matrices.append(covm)
         self.eigenvalues.append(torch.symeig(covm))
-        print(self.ctr)
-        self.ctr += 1
         # print(covm)
         # print(torch.eig(covm))
 
