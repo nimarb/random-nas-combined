@@ -476,6 +476,8 @@ class CGP2CNN(nn.Module):
         self.covariance_matrices = []
         self.eigenvalues = []
         self.register_hook = register_hook
+        self.num_layer_eig = num_layer_eig
+        self.layer_eig_spacing = layer_eig_spacing
         # encoder
         i = 0
         if arch_type == 'resnet':
@@ -698,14 +700,15 @@ class CGP2CNN(nn.Module):
                         for actual_layer in layer.features:
                             if isinstance(actual_layer, nn.Conv2d):
                                 layers_to_reg.append(actual_layer)
-                            if isinstance(actual_layer, _DenseBlock):
-                                for _, dl in actual_layer._modules.items():
-                                    if isinstance(dl, nn.Conv2d):
-                                        layers_to_reg.append(dl)
                             if isinstance(actual_layer, _Transition):
                                 for _, dl in actual_layer._modules.items():
                                     if isinstance(dl, nn.Conv2d):
                                         layers_to_reg.append(dl)
+                            if isinstance(actual_layer, _DenseBlock):
+                                for _, dl in actual_layer._modules.items():
+                                    for possible_conv in dl:
+                                        if isinstance(possible_conv, nn.Conv2d):
+                                            layers_to_reg.append(possible_conv)
                                     
 
             # elif arch_type == 'resnet':
@@ -720,9 +723,9 @@ class CGP2CNN(nn.Module):
             for idx, layer in enumerate(reversed(layers_to_reg)):
                 if 0 == idx:
                     actual_layers_to_reg.append(layer)
-                elif idx % layer_eig_spacing == 0:
+                elif idx % self.layer_eig_spacing == 0:
                     actual_layers_to_reg.append(layer)
-                if num_layer_eig <= len(actual_layers_to_reg):
+                if self.num_layer_eig <= len(actual_layers_to_reg):
                     break
 
             for layer in actual_layers_to_reg:
