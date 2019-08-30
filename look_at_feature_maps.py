@@ -71,9 +71,8 @@ def get_model_files(model_folder_name, save_dir='save_dir'):
         arch_str = line[idx_depth_end+2:]
         num_depth = line[idx+2:idx_depth_end]
         config_dict['num_depth'] = int(num_depth)
-        flat_gene = arch_str
 
-    gene_list = flat_gene.split('],')
+    gene_list = arch_str.split('],')
     cgp_genes = []
 
     for idx, item in enumerate(gene_list):
@@ -82,13 +81,17 @@ def get_model_files(model_folder_name, save_dir='save_dir'):
         layer_end_idx = layer.find("'", layer_start_idx+1)
         layer = layer[layer_start_idx+1:layer_end_idx]
         number = int(re.sub(r'[^0-9]', '', item.split(',')[1]))
-        cgp_genes.append([layer, number])
+        if 'resnet' in model_folder_name:
+            number2 = int(re.sub(r'[^0-9]', '', item.split(',')[2]))
+            cgp_genes.append([layer, number, number2])
+        else:
+            cgp_genes.append([layer, number])
 
     return model_state, config_dict, cgp_genes
 
 
 def load_model(model_folder_pth, num_layer_eig, layer_eig_spacing):
-    gpuID = 0
+    # gpuID = 0
     model_state, config, gene = get_model_files(model_folder_pth)
 
     # recreate the model
@@ -154,30 +157,28 @@ def split_eig_vectors(eig, num_eig_vec):
 
 #%%
 # ex_path = "densenet-2019-08-08-20-16-57.800772-1000-38-id0"
-# ex_path = 'resnet-2019-07-26-10-54-57.660333-25000-20-id2'
-ex_path = "vgg-2019-07-24-18-24-07.952185-10000-20-id2"
-num_train = 5000
-net_type = 'vgg'
+ex_path = 'resnet-2019-07-26-10-54-57.660333-25000-20-id2'
+# ex_path = "vgg-2019-07-24-18-24-07.952185-10000-20-id2"
+num_train = 500
+num_test = num_train
+net_type = 'resnet'
 num_layer_eig = 3
 layer_eig_spacing = 2
-f_names, _ = get_folder_names(net_type, num_train)
+# f_names, _ = get_folder_names(net_type, num_train)
 
 #%%
 
 avg_eigenvalues = []
 # for ex_path in f_names:
 model = load_model(ex_path, num_layer_eig, layer_eig_spacing)
-train_dl, valid_dl = get_dataloaders()
-test_dl = get_test_loader('test-distortions/impulse_noise.npy', batch_size=16, num_test=5000)
-ctr = 0
+train_dl, valid_dl = get_dataloaders(num_train=num_train)
+test_dl = get_test_loader('test-distortions/impulse_noise.npy', batch_size=16, num_test=num_test)
 # test_dl = torch.utils.data.DataLoader(
     # test_dataset, batch_size=128, shuffle=True, num_workers=int(4), drop_last=True)
 
 for _, (data, target) in enumerate(valid_dl):
     __ = model(data)
-    # print(f'iter: {ctr}')
-    ctr += 1
-    # print(f'len: {len(model.eigenvalues)}')
+    print(f'len: {len(model.eigenvalues)}')
 
 eig_vecs = model.eigenvalues
 eig_vec_dict = split_eig_vectors(eig_vecs, num_layer_eig)

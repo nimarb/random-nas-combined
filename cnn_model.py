@@ -482,8 +482,6 @@ class CGP2CNN(nn.Module):
         i = 0
         if arch_type == 'resnet':
             for name, in1, in2 in self.cgp:
-            # for name, in1, in self.cgp:
-                # in2 = in1
                 if name == 'input' in name:
                     i += 1
                     continue
@@ -685,18 +683,16 @@ class CGP2CNN(nn.Module):
         layers_to_reg = []
 
         if self.register_hook:
-            if arch_type == 'vgg' or arch_type == 'resnet':
+            if arch_type == 'vgg':
                 for name, layer in self.layer_module._modules.items():
-                    if isinstance(layer, SepConv) or \
-                        isinstance(layer, DilConv):
+                    if isinstance(layer, SepConv):
                         for actual_layer in layer.op:
                             if isinstance(actual_layer, nn.Conv2d):
                                 layers_to_reg.append(actual_layer)
 
             elif arch_type == 'densenet':
                 for name, layer in self.layer_module._modules.items():
-                    if isinstance(layer, SepConv) or isinstance(layer, DilConv) or \
-                    isinstance(layer,ResBlock) or isinstance(layer,DenseBlockTorch):
+                    if isinstance(layer, SepConv) or isinstance(layer, DenseBlockTorch):
                         for actual_layer in layer.features:
                             if isinstance(actual_layer, nn.Conv2d):
                                 layers_to_reg.append(actual_layer)
@@ -710,14 +706,16 @@ class CGP2CNN(nn.Module):
                                         if isinstance(possible_conv, nn.Conv2d):
                                             layers_to_reg.append(possible_conv)
                                     
-
-            # elif arch_type == 'resnet':
-            #     for name, layer in self.layer_module._modules.items():
-            #         if isinstance(layer, SepConv) or isinstance(layer, DilConv) or \
-            #         isinstance(layer,ResBlock) or isinstance(layer,DenseBlockTorch):
-            #             for _, actual_layer in layer._modules['op']._modules.items():
-            #                 if isinstance(actual_layer, nn.Conv2d):
-            #                     layer_to_reg = actual_layer
+            elif arch_type == 'resnet':
+                for name, layer in self.layer_module._modules.items():
+                    if isinstance(layer, ResBlock):
+                        for _, actual_layer in layer._modules['conv1']._modules.items():
+                            if isinstance(actual_layer, nn.Conv2d):
+                                layers_to_reg.append(actual_layer)
+                    elif isinstance(layer, SepConv):
+                        for _, actual_layer in layer._modules['op']._modules.items():
+                            if isinstance(actual_layer, nn.Conv2d):
+                                layers_to_reg.append(actual_layer)
 
             actual_layers_to_reg = []
             for idx, layer in enumerate(reversed(layers_to_reg)):
