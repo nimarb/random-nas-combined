@@ -1,7 +1,5 @@
 #%%
-
 import numpy as np
-import csv
 import json
 import argparse
 import seaborn as sns
@@ -114,8 +112,8 @@ def get_acc_dict(arch_dict, relative=False, tot_relative=True):
 
 
 def compare_dists(arch_dict=None, acc_dict=None, main_distortion='normal',
-                      plot_depths=False, show_graph=True, resnet_limit=False,
-                      relative=False):
+                  plot_depths=False, show_graph=True, resnet_limit=False,
+                  relative=False):
     if not acc_dict:
         accs2 = get_acc_dict(arch_dict, relative=relative)
     else:
@@ -144,11 +142,15 @@ def compare_dists(arch_dict=None, acc_dict=None, main_distortion='normal',
     box = sns_plt.get_position()
     sns_plt.set_position([box.x0, box.y0, box.width * 0.92, box.height])
 
-    title = f'DenseNet: Relative Test Acc on Distorted CIFAR10 Images With Small Training Datasets'
+    title = f'ResNet: Relative Test Acc on Distorted CIFAR10 Images With Small' \
+            f' Training Datasets'
     legend_labels = sorted_dists + ['avg distortion acc']
-    # sns_plt.legend(title='Distortions', labels=TEST_DISTS, loc='center left', bbox_to_anchor=(1.18, 0.5))
-    sns_plt.legend(title='Distortions', labels=legend_labels, loc='center left', bbox_to_anchor=(1.18, 0.5))
-    sns_plt.set(xlabel='Number of Training Data Images', ylabel='Relative Test Accuracy', title=title)
+    # sns_plt.legend(title='Distortions', labels=TEST_DISTS, loc='center left',
+    #                bbox_to_anchor=(1.18, 0.5))
+    sns_plt.legend(title='Distortions', labels=legend_labels,
+                   loc='center left', bbox_to_anchor=(1.18, 0.5))
+    sns_plt.set(xlabel='Number of Training Data Images',
+                ylabel='Relative Test Accuracy', title=title)
     print(title.replace(' ', '-').lower())
     # save_graph(plt, title.replace(' ', '-').lower())
     if show_graph:
@@ -181,13 +183,15 @@ num_train = 1000
 
 
 #%%
-compare_dists(densenet_d, relative=True)
+compare_dists(resnet_d, relative=True)
 
 #%%
 ## ResNet Analytics
 print('ResNet analytics')
 for num_train in NUM_TRAINS:
-    plt, sns_plt = analyse_arch_dict(resnet_d, num_train=num_train, distortion=dist, show_graph=False, resnet_limit=110)
+    plt, sns_plt = analyse_arch_dict(resnet_d, num_train=num_train,
+                                     distortion=dist, show_graph=False,
+                                     resnet_limit=110)
 plt.show()
 
 
@@ -195,13 +199,15 @@ plt.show()
 ## VGG Analyics
 print('VGG analytics')
 for num_train in NUM_TRAINS:
-    analyse_arch_dict(vgg_d, num_train=num_train, distortion=dist, show_graph=False)
+    analyse_arch_dict(vgg_d, num_train=num_train, distortion=dist,
+                      show_graph=False)
 
 #%%
 ## DenseNet Analyics
 print('DenseNet analytics')
 for num_train in NUM_TRAINS:
-    analyse_arch_dict(densenet_d, num_train=num_train, distortion=dist, show_graph=False)
+    analyse_arch_dict(densenet_d, num_train=num_train, distortion=dist,
+                      show_graph=False)
 
 
 #%%
