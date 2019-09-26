@@ -72,3 +72,37 @@ To plot the results contained in the consolidated results file, the scripts in
 However, it was only tested as being run as a notebook within VSCode with the
 MS Python extension.  
 In the file, first various functions are defined which can then be run as desired.
+
+#### Graph Types
+
+##### Absolute Distortion Accuracy
+
+To plot the absolute accuracy values for the individual network architecture
+types, use the `analyse_arch_dict()` function. The result is a graph with
+accuracy on the `y` axis and the number of convolutional layers on the `x` axis.
+The distortion can be defined with the `dist=` flag, where `normal` is the
+default.
+
+##### Distortion Accuracy Relative to Clean Dataset
+
+To get a graph where `normal` or no disortion always is at `1.0` and all other
+values are relative to it, use the `compare_dists()` function with the
+`relative=True` flag.
+
+##### Visualisation of Feature Map Ranks
+
+To look at the eigenvalues of the feature maps of the networks to determine the
+information content retained in the individual model types, use the functions
+in `look_at_feature_maps.py`. More details to follow...
+
+
+## Results
+
+In the default settings we trained the the networks for 100 epochs and randomly
+sampled ~300 different architectures for each network type (VGG, ResNet,
+DenseNet). The networks were trained with 500, 1000, 5000, 10k, 25k, and 50k
+training images from CIFAR10.
+
+![vgg-acc-no-dist](figs/vgg-test-accuracy-no-distortions.png "VGG Acc no Distortions")
+![resnet-acc-no-dist](figs/resnet-test-accuracy-no-distortions.png "ResNet Acc no Distortions")
+![densenet-acc-no-dist](figs/densenet-test-accuracy-no-distortions.png "DenseNet Acc no Distortions")
