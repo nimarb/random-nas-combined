@@ -12,3 +12,4 @@ log_depth-30-150/*
 sample_indices/*
 test-distortions/
 *.pickle
+cifar-10-python.tar.gz

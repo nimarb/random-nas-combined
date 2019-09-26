@@ -15,6 +15,8 @@ def get_distortion_tests(test_dir=None):
             test_dir = '/home/nimar/progs/random-nas-combined/test-distortions/'
         elif 'yagi22' in platform.node() or 'yagi21' in platform.node():
             test_dir = '/home/suganuma/dataset/CIFAR10-C/test/'
+        elif 'archtp480s' in platform.node():
+            test_dir = '/home/nb/progs/random-nas-combined/test-distortions/'
     test_dists = [
         'brightness.npy',
         'contrast.npy',
@@ -78,6 +80,8 @@ class NoisySet(Dataset):
             self.label_path = '/home/nimar/progs/random-nas-combined/test-distortions/labels.npy'
         elif 'yagi22' in platform.node() or 'yagi21' in platform.node():
             self.label_path = '/home/suganuma/dataset/CIFAR10-C/test/labels.npy'
+        elif 'archtp480s' in platform.node():
+            self.label_path = '/home/nb/progs/random-nas-combined/test-distortions/labels.npy'
         # self.label_path = 'labels.npy'
         self.data = np.load(test_path)
         self.targets = np.load(self.label_path).tolist()

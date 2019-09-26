@@ -140,6 +140,8 @@ if __name__ == '__main__':
             test_dir = '/home/nimar/progs/random-nas-combined/test-distortions/'
         elif 'yagi22' in platform.node() or 'yagi21' in platform.node():
             test_dir = '/home/suganuma/dataset/CIFAR10-C/test/'
+        if 'archtp480s' in platform.node():
+            test_dir = '/home/nb/progs/random-nas-combined/test-distortions/'
         test_dists = [
             'brightness.npy',
             'contrast.npy',

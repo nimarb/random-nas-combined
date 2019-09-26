@@ -13,10 +13,12 @@ from cgp import CGP
 from my_data_loader import get_train_valid_loader
 from datastuff import get_test_loader
 
+MODEL_SAVE_DIR = 'save_dir'
+
 #%%
 
 
-def get_model_files_complete(model_folder_name, save_dir='save_dir'):
+def get_model_files_complete(model_folder_name, save_dir=MODEL_SAVE_DIR):
     folder_path = Path(f'{save_dir}/{model_folder_name}')
 
     model_state = torch.load(folder_path / "model_0.pth")
@@ -54,7 +56,7 @@ def get_model_files_complete(model_folder_name, save_dir='save_dir'):
 
     return model_state, config_dict, pop
 
-def get_model_files(model_folder_name, save_dir='save_dir'):
+def get_model_files(model_folder_name, save_dir=MODEL_SAVE_DIR):
     folder_path = Path(f'{save_dir}/{model_folder_name}')
 
     model_state = torch.load(folder_path / "model_0.pth")
@@ -130,7 +132,7 @@ def get_dataloaders(num_train=5000):
         data_num=num_train)
 
 
-def get_folder_names(net_type='vgg', num_train=500, save_dir='save_dir'):
+def get_folder_names(net_type='vgg', num_train=500, save_dir=MODEL_SAVE_DIR):
     if isinstance(save_dir, str):
         save_dir = Path(save_dir)
 
@@ -156,8 +158,8 @@ def split_eig_vectors(eig, num_eig_vec):
 
 
 #%%
-# ex_path = "densenet-2019-08-08-20-16-57.800772-1000-38-id0"
-ex_path = 'resnet-2019-07-26-10-54-57.660333-25000-20-id2'
+ex_path = "densenet-2019-08-08-20-16-57.800772-1000-38-id0"
+# ex_path = 'resnet-2019-07-26-10-54-57.660333-25000-20-id2'
 # ex_path = "vgg-2019-07-24-18-24-07.952185-10000-20-id2"
 num_train = 500
 num_test = num_train
