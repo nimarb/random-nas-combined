@@ -1,4 +1,4 @@
-# Random NAS
+# Using Random NAS to Evaluate Disortion Robustness of CNN Architecture Types
 
 This code was used to explore the fundamental differences between the DNN
 architecture types VGG, ResNet, and DenseNet.
@@ -95,7 +95,6 @@ To look at the eigenvalues of the feature maps of the networks to determine the
 information content retained in the individual model types, use the functions
 in `look_at_feature_maps.py`. More details to follow...
 
-
 ## Results
 
 In the default settings we trained the the networks for 100 epochs and randomly
@@ -103,6 +102,18 @@ sampled ~300 different architectures for each network type (VGG, ResNet,
 DenseNet). The networks were trained with 500, 1000, 5000, 10k, 25k, and 50k
 training images from CIFAR10.
 
+The following three graphs show the obtained accuracies for the three architecture types on CIFAR10. Please note, that those accuracies are not necessarily comparable to other papers, as we only trained for 100 epochs due to compute constraints. The three architecture types here are comparable with one another.
+
 ![vgg-acc-no-dist](figs/vgg-test-accuracy-no-distortions.png "VGG Acc no Distortions")
 ![resnet-acc-no-dist](figs/resnet-test-accuracy-no-distortions.png "ResNet Acc no Distortions")
 ![densenet-acc-no-dist](figs/densenet-test-accuracy-no-distortions.png "DenseNet Acc no Distortions")
+
+When evaluating the trained models on a distorted CIFAR10 test dataset (15 distortions), we can see that they perform very differently from one another. The three graphs below show the `normal` distortion (no distortion) as baseline for each number of training samples trained with, and relative to that the performance for distorted test samples. The dashed green line shows the average perfomance of all distortions combined. It is interesting to see, that for VGG and ResNet, distortion robustness on average decreases when trained on more training samples. One issue here could be the CIFAR10 dataset, which is very small and thus distortions might have unpredictable influences on the images at those sizes, making them completely unrecognisable. This is to be investigated further by testing with larger datasets.
+
+DenseNet type networks seem to be significantly more robust against all types of distortions than ResNet and VGG type networks.
+
+![vgg-distortion-test-tot-relative](figs/vgg-distortion-test-tot-relative.png "VGG")
+![resnet-distortion-test-tot-relative](figs/resnet-distortion-test-tot-relative.png "ResNet")
+![densenet-distortion-test-tot-relative](figs/densenet-distortion-test-tot-relative.png "DenseNet")
+
+Further analysis to come...
