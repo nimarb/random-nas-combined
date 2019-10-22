@@ -4,8 +4,9 @@ import torch.nn as nn
 import numpy as np
 import json
 import re
-
+from matplotlib import pyplot as plt
 from pathlib import Path
+import seaborn as sns
 
 from cnn_model import CGP2CNN
 from cgp_config import CgpInfoConvSet
@@ -18,14 +19,14 @@ MODEL_SAVE_DIR = 'save_dir'
 #%%
 
 
-def get_model_files_complete(model_folder_name, save_dir=MODEL_SAVE_DIR):
+def get_model_files_complete(model_folder_name, save_dir='save_dir'):
     folder_path = Path(f'{save_dir}/{model_folder_name}')
 
     model_state = torch.load(folder_path / "model_0.pth")
     config_pth = folder_path / "config.json"
     with open(config_pth, 'r') as config_f:
         config_dict = json.load(config_f)
-    
+
     layer_cfg_pth = folder_path / "log.txt"
     with open(layer_cfg_pth, 'r') as layer_cfg_f:
         lines = layer_cfg_f.readlines()
@@ -56,14 +57,15 @@ def get_model_files_complete(model_folder_name, save_dir=MODEL_SAVE_DIR):
 
     return model_state, config_dict, pop
 
-def get_model_files(model_folder_name, save_dir=MODEL_SAVE_DIR):
+
+def get_model_files(model_folder_name, save_dir='save_dir'):
     folder_path = Path(f'{save_dir}/{model_folder_name}')
 
     model_state = torch.load(folder_path / "model_0.pth")
     config_pth = folder_path / "config.json"
     with open(config_pth, 'r') as config_f:
         config_dict = json.load(config_f)
-    
+
     layer_cfg_pth = folder_path / "log-active.txt"
     with open(layer_cfg_pth, 'r') as layer_cfg_f:
         lines = layer_cfg_f.readlines()
@@ -132,7 +134,7 @@ def get_dataloaders(num_train=5000):
         data_num=num_train)
 
 
-def get_folder_names(net_type='vgg', num_train=500, save_dir=MODEL_SAVE_DIR):
+def get_folder_names(net_type='vgg', num_train=500, save_dir='save_dir'):
     if isinstance(save_dir, str):
         save_dir = Path(save_dir)
 
@@ -156,6 +158,24 @@ def split_eig_vectors(eig, num_eig_vec):
     return eig_vec_dict
 
 
+def visualise_eig_rank(eig_dict):
+    """Visualise the dict containing the eigenvectors."""
+    same_pos_eig_val = []
+    for layer_id, eig_vals in eig_dict.items():
+        for idx, val in enumerate(eig_vals.tolist()):
+            if 0 == layer_id:
+                same_pos_eig_val.append([val])
+            else:
+                same_pos_eig_val[idx].append(val)
+
+    for vals in same_pos_eig_val:
+        if 10 > vals[0]:
+            sns_plt = sns.lineplot(x=list(range(len(eig_dict))), y=vals)
+
+    # print(same_pos_eig_val)
+    plt.show()
+
+    return plt, sns_plt
 
 #%%
 ex_path = "densenet-2019-08-08-20-16-57.800772-1000-38-id0"
@@ -197,3 +217,41 @@ for idx, eigenvalues in eig_vec_dict.items():
     # avg_eigenvalues.append(mean_real)
 
 #%%
+
+# visualise_eig_rank(mean_real_dict)
+
+#%%
+
+eig_dict = mean_real_dict
+same_pos_eig_val = []
+for layer_id, eig_vals in eig_dict.items():
+    for idx, val in enumerate(eig_vals.tolist()):
+        if 0 == layer_id:
+            same_pos_eig_val.append([val])
+        else:
+            same_pos_eig_val[idx].append(val)
+
+
+#%%
+
+totsum = 0
+for vals in same_pos_eig_val:
+    if 10 > vals[0]:
+        for val in vals:
+            totsum += val
+
+print(f'sum of all minus the largest vals is: {totsum}')
+
+totsums = 0
+for vals in same_pos_eig_val:
+    totsums += sum(vals)
+print(f'sum of all vals is: {totsums}')
+
+# Example outputs on the same datasets, model, etc. but different runs:
+# sum of all minus the largest vals is: -2.3169869720063296e-07
+# sum of all vals is: 113.578864819570844
+# sum of all minus the largest vals is: 3.2816332751206545e-07
+# sum of all vals is: 108.76333650980395
+
+#%%
+

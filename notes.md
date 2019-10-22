@@ -15,6 +15,30 @@
 
 ## Features / implementations
 
+### Visualising Layer Forgetfulness
+
+The goal is to compare the feature maps' eigenvalues of the different
+architectures to explain why some network types generalise better.
+Or rather, forget less.
+
+Graphs to create should have:
+
+* x-axis: layer number
+* y-axis: avg value; max value
+* one graph per network type (VGG, ResNet, DenseNet)
+
+#### Problems
+
+The eigenvalues are very small, except for one value. Therefore, plotting
+all 64 values per layer on one graph doesn't make sense as the smaller
+values wouldn't be visible.  
+
+Furthermore, the remaining small values look somewhat strange, almost like
+mirrored values:
+
+![eigenvals-without-max-densenet](figs/eigenvals-wo-max-densenet-500valid-3layers-2spacing_densenet-2019-08-08-20-16-57-800772-1000-38-id0.png)
+
+
 ### Model Saving / Loading
 
 * **Important**: currently only the last model of a training process is being
