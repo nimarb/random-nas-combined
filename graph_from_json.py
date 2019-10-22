@@ -126,7 +126,7 @@ def compare_dists(arch_dict=None, acc_dict=None, main_distortion='normal',
     sorted_dists = np.array(TEST_DISTS)[sort_idx].tolist()
 
     palette = sns.color_palette('RdBu', n_colors=20)
-    for dist,col in zip(sorted_dists, palette):
+    for dist, col in zip(sorted_dists, palette):
         if dist == 'normal':
             # sns_plt = sns.lineplot(x=depths[dist], y=accs[dist], color='red')
             sns_plt = sns.lineplot(x=NUM_TRAINS, y=accs2[dist], color='red')
