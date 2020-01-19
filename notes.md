@@ -1,5 +1,31 @@
 # Notes
 
+- [Experiment notes](#experiment-notes)
+- [Observations](#observations)
+- [Features / implementations](#features--implementations)
+  - [Visualising Layer Forgetfulness](#visualising-layer-forgetfulness)
+    - [Problems](#problems)
+  - [Model Saving / Loading](#model-saving--loading)
+  - [Layer forgetfulness](#layer-forgetfulness)
+    - [Method](#method)
+    - [Implementation](#implementation)
+  - [DenseNet blocks](#densenet-blocks)
+    - [Similarities and differences DenseNet vs ResNet](#similarities-and-differences-densenet-vs-resnet)
+    - [Architecture](#architecture)
+      - [Current bug in SepConv:](#current-bug-in-sepconv)
+      - [Current bug in `checkpoint(bn_function)` in `_DenseLayer`](#current-bug-in-checkpointbnfunction-in-denselayer)
+    - [PyTorch implementations](#pytorch-implementations)
+  - [Inception Blocks](#inception-blocks)
+- [Bugs](#bugs)
+  - [Number of layers hovers around 30](#number-of-layers-hovers-around-30)
+    - [Infos on the bug](#infos-on-the-bug)
+    - [Tried fixes](#tried-fixes)
+    - [Fix](#fix)
+  - [Number of ResNet layers not random](#number-of-resnet-layers-not-random)
+    - [Infos/observations of the bug](#infosobservations-of-the-bug)
+    - [Tried fixes](#tried-fixes-1)
+    - [Fix](#fix-1)
+
 ## Experiment notes
 
 * experiments until 2019-07-24 were run with `--num_min_depth=30` and `--num_max_depth=150`.
@@ -107,6 +133,10 @@ The actual error here is, that the output of The conv layer in the
   * Gives some errors, see above
 * [very clean implementation](https://github.com/kevinzakka/densenet)
   * seems to have not ideal performance according to the author
+
+### Inception Blocks
+
+Could be interesting to implement and look at, from the 2015 paper GoogLeNet.
 
 ## Bugs
 
